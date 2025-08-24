@@ -51,4 +51,4 @@ Users are limited to only seeing their own pictures.
 
 [Let Them Draw CI/CD Pipeline diagram file](https://app.diagrams.net/?title=let-them-draw-cicd-pipeline#Uhttps%3A%2F%2Fraw.githubusercontent.com%2Fdanielwohlgemuth%2Flet-them-draw-infrastructure%2Frefs%2Fheads%2Fmain%2Fassets%2Flet-them-draw-cicd-pipeline.drawio)
 
-The code that sets up and maintains the infrastructure of the app is configured through 4 pipelines: the main pipeline that sets up the whole AWS infrastructure, two similar pipelines that handle updates to the receptionist and artist components, and one that handles updates to the website. This separation allows independent updates to the infrastructure and its functionality as needed.
+The code that sets up and maintains the infrastructure of the app is configured through 4 pipelines: the main pipeline that sets up the whole AWS infrastructure, two additional pipelines that handle updates to the receptionist and artist components, and one that handles updates to the website. This separation allows independent updates to the infrastructure and its functionality as needed.
