@@ -67,7 +67,6 @@ export class AwsPipelineStack extends cdk.Stack {
             },
             build: {
               commands: [
-                'cd cdk',
                 'npx cdk deploy --all --require-approval never'
               ]
             }
