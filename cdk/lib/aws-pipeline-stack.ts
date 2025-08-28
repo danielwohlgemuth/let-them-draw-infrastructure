@@ -52,6 +52,15 @@ export class AwsPipelineStack extends cdk.Stack {
       assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com')
     });
     role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSCloudFormationFullAccess'));
+    role.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['sts:AssumeRole'],
+      resources: [
+        `arn:aws:iam::${this.account}:role/cdk-*-deploy-role-${this.account}-${this.region}`,
+        `arn:aws:iam::${this.account}:role/cdk-*-file-publishing-role-${this.account}-${this.region}`,
+        `arn:aws:iam::${this.account}:role/cdk-*-lookup-role-${this.account}-${this.region}`
+      ]
+    }));
 
     const deployAction = new codepipeline_actions.CodeBuildAction({
       actionName: 'DeployStacks',
@@ -61,6 +70,7 @@ export class AwsPipelineStack extends cdk.Stack {
           phases: {
             install: {
               commands: [
+                'n install 22',
                 'cd cdk',
                 'npm install'
               ]
