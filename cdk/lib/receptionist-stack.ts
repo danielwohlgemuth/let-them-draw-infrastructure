@@ -1,19 +1,21 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
 
-export class ReceptionistPipelineStack extends cdk.Stack {
-  public readonly bucket: s3.Bucket;
-
+export class ReceptionistStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const environment = ssm.StringParameter.fromStringParameterName(this, 'Param', '/let-them-draw/environment');
+    const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
     cdk.Tags.of(this).add('Environment', environment.stringValue);
 
     const bucket = new s3.Bucket(this, 'Bucket', {
@@ -25,7 +27,16 @@ export class ReceptionistPipelineStack extends cdk.Stack {
         noncurrentVersionExpiration: cdk.Duration.days(1),
       }]
     });
-    this.bucket = bucket;
+
+    const lambdaVersion = ssm.StringParameter.fromStringParameterName(this, 'LambdaVersionParam', '/let-them-draw/receptionist-lambda-version');
+    const fn = new lambda.Function(this, 'Function', {
+        runtime: lambda.Runtime.PYTHON_3_13,
+        handler: 'lambda_function.lambda_handler',
+        code: lambda.Code.fromInline('print("placeholder")'),
+    });
+    // this.function = fn;
+    const queue = new sqs.Queue(this, 'Queue');
+    queue.grantSendMessages(fn);
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineType: codepipeline.PipelineType.V2
@@ -78,8 +89,13 @@ export class ReceptionistPipelineStack extends cdk.Stack {
     }));
     role.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
+      actions: ['lambda:UpdateFunctionCode'],
+      resources: [fn.functionArn]
+    }));
+    role.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
       actions: ['ssm:PutParameter'],
-      resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/let-them-draw/receptionist-lambda-version`]
+      resources: [lambdaVersion.parameterArn]
     }));
 
     const deployAction = new codepipeline_actions.CodeBuildAction({
@@ -98,7 +114,7 @@ export class ReceptionistPipelineStack extends cdk.Stack {
                 'cd ..',
                 `aws s3 cp lambda.zip s3://${bucket.bucketName}/lambda.zip`,
                 `VERSION_ID=$(aws s3api list-object-versions --bucket ${bucket.bucketName} --prefix lambda.zip --query "Versions[?IsLatest].VersionId" --output text)`,
-                'echo $VERSION_ID',
+                `aws lambda update-function-code --function-name ${fn.functionName} --zip-file fileb://lambda.zip`,
                 'aws ssm put-parameter --name "/let-them-draw/receptionist-lambda-version" --value "$VERSION_ID" --type "String" --overwrite'
               ]
             }
@@ -112,6 +128,16 @@ export class ReceptionistPipelineStack extends cdk.Stack {
     pipeline.addStage({
       stageName: 'Deploy',
       actions: [deployAction],
+    });
+
+    const receptionistIntegration = new integrations.HttpLambdaIntegration('ReceptionistIntegration', fn);
+    const httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
+      defaultIntegration: receptionistIntegration,
+    });
+    httpApi.addRoutes({
+        path: '/',
+        methods: [apigwv2.HttpMethod.GET],
+        integration: receptionistIntegration,
     });
   }
 }
