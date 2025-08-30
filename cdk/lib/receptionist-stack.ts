@@ -10,9 +10,14 @@ import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+
+interface ReceptionistStackProps extends cdk.StackProps {
+  table: dynamodb.TableV2;
+}
 
 export class ReceptionistStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: ReceptionistStackProps) {
     super(scope, id, props);
 
     const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
@@ -28,15 +33,19 @@ export class ReceptionistStack extends cdk.Stack {
       }]
     });
 
+    const queue = new sqs.Queue(this, 'Queue');
     const lambdaVersion = ssm.StringParameter.fromStringParameterName(this, 'LambdaVersionParam', '/let-them-draw/receptionist-lambda-version');
     const fn = new lambda.Function(this, 'Function', {
         runtime: lambda.Runtime.PYTHON_3_13,
         handler: 'lambda_function.lambda_handler',
         code: lambda.Code.fromInline('print("placeholder")'),
+        environment: {
+          "TABLE_NAME": props.table.tableName,
+          "QUEUE_NAME": queue.queueName,
+        },
     });
-    // this.function = fn;
-    const queue = new sqs.Queue(this, 'Queue');
     queue.grantSendMessages(fn);
+    props.table.grantReadWriteData(fn);
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineType: codepipeline.PipelineType.V2
@@ -108,6 +117,7 @@ export class ReceptionistStack extends cdk.Stack {
               commands: [
                 'echo "Packaging Lambda code..."',
                 'mkdir package',
+                'pip install -r requirements.txt --python-version 3.13 --platform manylinux2014_x86_64 --target package/ --only-binary=:all:',
                 'cp -r src/* ./package/',
                 'cd package',
                 'zip -r ../lambda.zip .',
@@ -136,8 +146,13 @@ export class ReceptionistStack extends cdk.Stack {
     });
     httpApi.addRoutes({
         path: '/',
-        methods: [apigwv2.HttpMethod.GET],
+        methods: [apigwv2.HttpMethod.ANY],
         integration: receptionistIntegration,
+    });
+
+    new cdk.CfnOutput(this, 'FunctionName', {
+      value: fn.functionName,
+      description: 'The name of the Receptionist Lambda function',
     });
   }
 }
