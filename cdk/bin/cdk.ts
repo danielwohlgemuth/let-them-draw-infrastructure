@@ -8,6 +8,6 @@ const app = new cdk.App();
 
 cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
-const databaseStack = new DatabaseStack(app, 'DatabaseStack2', {});
+const databaseStack = new DatabaseStack(app, 'DatabaseStack3', {});
 new AwsPipelineStack(app, 'AwsPipelineStack', {});
 new ReceptionistStack(app, 'ReceptionistStack', { table: databaseStack.table });

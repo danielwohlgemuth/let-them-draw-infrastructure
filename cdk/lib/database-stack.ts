@@ -14,6 +14,7 @@ export class DatabaseStack extends cdk.Stack {
 
     const table = new dynamodb.TableV2(this, 'Database', {
       partitionKey: { name: 'requestId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       billing: dynamodb.Billing.provisioned({
         readCapacity: dynamodb.Capacity.fixed(5),
