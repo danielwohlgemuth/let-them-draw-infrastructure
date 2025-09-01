@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import { DatabaseStack } from '../lib/database-stack';
 import { AwsPipelineStack } from '../lib/aws-pipeline-stack';
 import { ReceptionistStack } from '../lib/receptionist-stack';
+import { WebsiteStack } from '../lib/website-stack';
 
 const app = new cdk.App();
 
@@ -10,4 +11,5 @@ cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
 const databaseStack = new DatabaseStack(app, 'DatabaseStack3', {});
 new AwsPipelineStack(app, 'AwsPipelineStack', {});
-new ReceptionistStack(app, 'ReceptionistStack', { table: databaseStack.table });
+const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', { table: databaseStack.table });
+new WebsiteStack(app, 'WebsiteStack', { httpApi: receptionistStack.httpApi });

@@ -17,6 +17,8 @@ interface ReceptionistStackProps extends cdk.StackProps {
 }
 
 export class ReceptionistStack extends cdk.Stack {
+  public readonly httpApi: apigwv2.HttpApi;
+
   constructor(scope: Construct, id: string, props: ReceptionistStackProps) {
     super(scope, id, props);
 
@@ -144,6 +146,7 @@ export class ReceptionistStack extends cdk.Stack {
     const httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
       defaultIntegration: receptionistIntegration,
     });
+    this.httpApi = httpApi;
     httpApi.addRoutes({
         path: '/',
         methods: [apigwv2.HttpMethod.ANY],
