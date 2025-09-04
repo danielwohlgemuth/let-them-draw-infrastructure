@@ -37,11 +37,11 @@ DynamoDB is used for this.
 ### Database Schema
 
 - User Id (primary key)
-- Picture Id (secondary key)
-- Requirements (object (shape, color))
+- Request Id (secondary key)
 - Request Date (date)
+- Requirements (object (shape, color))
 - Status (string (new, in progress, done))
-- URL (string)
+- Picture URL (string)
 
 Users are limited to only seeing their own pictures.
 
