@@ -166,7 +166,7 @@ export class WebsiteStack extends cdk.Stack {
     });
 
     const devEnvironment = new cdk.CfnCondition(this, 'CfnCondition', {
-      expression: cdk.Fn.conditionEquals(environment.stringValue, 'dev2'),
+      expression: cdk.Fn.conditionEquals(environment.stringValue, 'dev'),
     });
 
     const callbackUrls: any[] = [
