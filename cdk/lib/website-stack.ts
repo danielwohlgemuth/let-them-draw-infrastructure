@@ -8,6 +8,9 @@ import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface WebsiteStackProps extends cdk.StackProps {
   httpApi: apigwv2.HttpApi;
@@ -16,6 +19,9 @@ interface WebsiteStackProps extends cdk.StackProps {
 export class WebsiteStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: WebsiteStackProps) {
     super(scope, id, props);
+
+    const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
+    cdk.Tags.of(this).add('Environment', environment.stringValue);
 
     const bucket = new s3.Bucket(this, 'Bucket', {
         websiteIndexDocument: 'index.html',
@@ -134,6 +140,99 @@ export class WebsiteStack extends cdk.Stack {
                 bucket: bucket
             })
         ]
+    });
+
+    const userPool = new cognito.UserPool(this, 'UserPool', {
+      selfSignUpEnabled: true,
+      signInCaseSensitive: false,
+      signInAliases: {
+        email: true
+      },
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: true
+        }
+      },
+      passwordPolicy: {
+        minLength: 10,
+        requireDigits: false,
+        requireLowercase: false,
+        requireSymbols: false,
+        requireUppercase: false
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY
+    });
+
+    const devEnvironment = new cdk.CfnCondition(this, 'CfnCondition', {
+      expression: cdk.Fn.conditionEquals(environment.stringValue, 'dev2'),
+    });
+
+    const callbackUrls: any[] = [
+      `https://${distribution.domainName}/auth/callback`,
+      cdk.Fn.conditionIf(devEnvironment.logicalId, 'http://localhost:3000/auth/callback', cdk.Aws.NO_VALUE),
+    ];
+    const logoutUrls: any[] = [
+      `https://${distribution.domainName}/`,
+      cdk.Fn.conditionIf(devEnvironment.logicalId, 'http://localhost:3000/', cdk.Aws.NO_VALUE),
+    ];
+
+    const userPoolClient = userPool.addClient('UserPoolClient', {
+      oAuth: {
+        flows: {
+          authorizationCodeGrant: true,
+          implicitCodeGrant: true
+        },
+        scopes: [
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.PROFILE
+        ],
+        callbackUrls: callbackUrls,
+        logoutUrls: logoutUrls,
+      },
+      accessTokenValidity: cdk.Duration.hours(1),
+      idTokenValidity: cdk.Duration.hours(1),
+      refreshTokenValidity: cdk.Duration.days(30),
+      preventUserExistenceErrors: true,
+    });
+
+    userPool.addDomain('UserPoolDomain', {
+      cognitoDomain: {
+        domainPrefix: `let-them-draw-${environment.stringValue}`
+      },
+      managedLoginVersion: cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN
+    })
+
+    const cognitoBackgroundSvg = fs.readFileSync(path.join(__dirname, '../../assets/cognito-background.svg')).toString('base64');
+
+    new cognito.CfnManagedLoginBranding(this, 'CfnManagedLoginBranding', {
+      userPoolId: userPool.userPoolId,
+      clientId: userPoolClient.userPoolClientId,
+      returnMergedResources: false,
+      useCognitoProvidedValues: false,
+      settings: {
+        categories: {
+          global: {
+            colorSchemeMode: 'DYNAMIC'
+          }
+        }
+      },
+      assets: [
+        {
+          category: 'PAGE_BACKGROUND',
+          colorMode: 'DARK',
+          extension: 'SVG',
+          bytes: cognitoBackgroundSvg
+        },
+        {
+          category: 'PAGE_BACKGROUND',
+          colorMode: 'LIGHT',
+          extension: 'SVG',
+          bytes: cognitoBackgroundSvg
+        }
+      ]
     });
   }
 }
