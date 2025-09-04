@@ -52,3 +52,56 @@ Users are limited to only seeing their own pictures.
 [Let Them Draw CI/CD Pipeline diagram file](https://app.diagrams.net/?title=let-them-draw-cicd-pipeline#Uhttps%3A%2F%2Fraw.githubusercontent.com%2Fdanielwohlgemuth%2Flet-them-draw-infrastructure%2Frefs%2Fheads%2Fmain%2Fassets%2Flet-them-draw-cicd-pipeline.drawio)
 
 The code that sets up and maintains the infrastructure of the app is configured through 4 pipelines: the main pipeline that sets up the whole AWS infrastructure, two additional pipelines that handle updates to the receptionist and artist components, and one that handles updates to the website. This separation allows independent updates to the infrastructure and its functionality as needed.
+
+## Setup
+
+### Prerequisites
+
+- AWS CLI
+- CDK CLI
+
+Initialize CDK
+
+```bash
+cdk bootstrap
+```
+
+
+Setup the GitHub connection:
+
+1. Go to the AWS Console
+2. Navigate to CodeBuild
+3. Go to Settings and then Connections
+4. Click on "Create connection"
+5. Select "GitHub" as the provider
+6. Set the connection name to "let-them-draw"
+7. Click "Connect to GitHub"
+8. Click "Install a new app"
+9. On GitHub, select the repository and click "Install & Authorize"
+10. On AWS, click "Connect"
+11. Copy the connection ARN
+12. Navigate to Parameter Store
+13. Click on "Create parameter"
+14. Set Name to "/let-them-draw/github-connection-arn"
+15. Paste the copied connection ARN from step 11 into the Value field
+16. Click on "Create parameter"
+
+Setup the Environment parameter
+
+1. Navigate to Parameter Store
+2. Click on "Create parameter"
+3. Set Name to "/let-them-draw/environment"
+4. Set Value to either "dev" or "prod"
+5. Click on "Create parameter"
+
+Setup the infrastructure-branch parameter
+
+1. Navigate to Parameter Store
+2. Click on "Create parameter"
+3. Set Name to "/let-them-draw/infrastructure-branch"
+4. Set Value to either "dev" or "main"
+5. Click on "Create parameter"
+
+```bash
+cdk deploy --all
+```
