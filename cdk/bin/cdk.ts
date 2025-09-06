@@ -4,6 +4,7 @@ import { DatabaseStack } from '../lib/database-stack';
 import { AwsPipelineStack } from '../lib/aws-pipeline-stack';
 import { ReceptionistStack } from '../lib/receptionist-stack';
 import { WebsiteStack } from '../lib/website-stack';
+import { ArtistStack } from '../lib/artist-stack';
 
 const app = new cdk.App();
 
@@ -13,3 +14,4 @@ const databaseStack = new DatabaseStack(app, 'DatabaseStack3', {});
 new AwsPipelineStack(app, 'AwsPipelineStack', {});
 const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', { table: databaseStack.table });
 new WebsiteStack(app, 'WebsiteStack', { httpApi: receptionistStack.httpApi });
+new ArtistStack(app, 'ArtistStack', { table: databaseStack.table, queue: receptionistStack.queue });
