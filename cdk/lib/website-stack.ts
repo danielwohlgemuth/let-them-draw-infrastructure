@@ -17,6 +17,8 @@ interface WebsiteStackProps extends cdk.StackProps {
 }
 
 export class WebsiteStack extends cdk.Stack {
+  userPool: cognito.UserPool;
+
   constructor(scope: Construct, id: string, props: WebsiteStackProps) {
     super(scope, id, props);
 
@@ -164,6 +166,7 @@ export class WebsiteStack extends cdk.Stack {
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: cdk.RemovalPolicy.DESTROY
     });
+    this.userPool = userPool;
 
     const devEnvironment = new cdk.CfnCondition(this, 'CfnCondition', {
       expression: cdk.Fn.conditionEquals(environment.stringValue, 'dev'),

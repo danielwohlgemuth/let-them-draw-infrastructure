@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as sources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
@@ -9,13 +10,13 @@ import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as events from 'aws-cdk-lib/aws-events';
-import * as targets from 'aws-cdk-lib/aws-events-targets';
-import * as sns from 'aws-cdk-lib/aws-sns';
+import * as ses from 'aws-cdk-lib/aws-ses';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 
 interface ArtistStackProps extends cdk.StackProps {
   table: dynamodb.TableV2;
   queue: sqs.Queue;
+  userPool: cognito.UserPool;
 }
 
 export class ArtistStack extends cdk.Stack {
@@ -26,17 +27,27 @@ export class ArtistStack extends cdk.Stack {
     const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
     cdk.Tags.of(this).add('Environment', environment.stringValue);
 
-    const artBucket = new s3.Bucket(this, 'ArtBucket', {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-      versioned: true,
-      lifecycleRules: [{
-        abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
-        noncurrentVersionExpiration: cdk.Duration.days(1),
-      }]
+    const configurationSet = new ses.ConfigurationSet(this, 'EmailConfigurationSet', {
+      reputationMetrics: true,
+      suppressionReasons: ses.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
     });
 
-    const buildBucket = new s3.Bucket(this, 'BuildBucket', {
+    const fromEmail = ssm.StringParameter.fromStringParameterName(this, 'FromEmailParam', '/let-them-draw/from-email');
+    new ses.EmailIdentity(this, 'VerifiedIdentity', {
+      identity: ses.Identity.email(fromEmail.stringValue),
+      configurationSet: configurationSet,
+    });
+
+    new ses.CfnTemplate(this, 'CfnTemplate', {
+      template: {
+        templateName: 'ArtworkNotification',
+        subjectPart: 'Your Art is Ready!',
+        htmlPart: '<h1>Hello,</h1><p>Your artwork is ready!</p><p>You can see it at {{artworkUrl}}</p>',
+        textPart: 'Hello,\n\nYour artwork is ready!\nYou can see it at {{artworkUrl}}'
+      },
+    });
+
+    const artBucket = new s3.Bucket(this, 'ArtBucket', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       versioned: true,
@@ -52,13 +63,37 @@ export class ArtistStack extends cdk.Stack {
       code: lambda.Code.fromInline('print("placeholder")'),
       environment: {
         "TABLE_NAME": props.table.tableName,
-        "QUEUE_NAME": props.queue.queueName,
+        "BUCKET_NAME": artBucket.bucketName,
+        "USER_POOL_ID": props.userPool.userPoolId,
+        "SES_CONFIGURATION_SET": configurationSet.configurationSetName,
+        "SES_FROM_EMAIL": fromEmail.stringValue,
       },
     });
+    fn.addEventSource(new sources.SqsEventSource(props.queue, {
+      maxBatchingWindow: cdk.Duration.seconds(5),
+      reportBatchItemFailures: true,
+      maxConcurrency: 2,
+    }));
     props.queue.grantConsumeMessages(fn);
     props.table.grantReadWriteData(fn);
     artBucket.grantRead(fn);
     artBucket.grantPut(fn);
+    fn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'cognito-idp:AdminGetUser',
+        // 'cognito-idp:ListUsers',
+      ],
+      resources: [props.userPool.userPoolArn],
+    }));
+    fn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'ses:SendEmail',
+        'ses:SendRawEmail',
+      ],
+      resources: ['*'], // TODO: Figure out how this can be made more restrictive
+    }));
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineType: codepipeline.PipelineType.V2

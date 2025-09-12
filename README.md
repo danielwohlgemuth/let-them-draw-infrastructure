@@ -102,6 +102,15 @@ Setup the infrastructure-branch parameter
 4. Set Value to either "dev" or "main"
 5. Click on "Create parameter"
 
+Setup the from-email parameter
+
+1. Navigate to Parameter Store
+2. Click on "Create parameter"
+3. Set Name to "/let-them-draw/from-email"
+4. Set Value to an email address that can be verified and will be used as the source address for outgoing emails
+5. Click on "Create parameter"
+
+
 ```bash
 cdk deploy --all
 ```

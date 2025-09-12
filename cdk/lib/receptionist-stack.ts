@@ -14,11 +14,11 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 interface ReceptionistStackProps extends cdk.StackProps {
   table: dynamodb.TableV2;
+  queue: sqs.Queue;
 }
 
 export class ReceptionistStack extends cdk.Stack {
   public readonly httpApi: apigwv2.HttpApi;
-  public readonly queue: sqs.Queue;
 
   constructor(scope: Construct, id: string, props: ReceptionistStackProps) {
     super(scope, id, props);
@@ -36,8 +36,6 @@ export class ReceptionistStack extends cdk.Stack {
       }]
     });
 
-    const queue = new sqs.Queue(this, 'Queue');
-    this.queue = queue;
     const lambdaVersion = ssm.StringParameter.fromStringParameterName(this, 'LambdaVersionParam', '/let-them-draw/receptionist-lambda-version');
     const fn = new lambda.Function(this, 'Function', {
         runtime: lambda.Runtime.PYTHON_3_13,
@@ -45,10 +43,10 @@ export class ReceptionistStack extends cdk.Stack {
         code: lambda.Code.fromInline('print("placeholder")'),
         environment: {
           "TABLE_NAME": props.table.tableName,
-          "QUEUE_NAME": queue.queueName,
+          "QUEUE_NAME": props.queue.queueName,
         },
     });
-    queue.grantSendMessages(fn);
+    props.queue.grantSendMessages(fn);
     props.table.grantReadWriteData(fn);
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
