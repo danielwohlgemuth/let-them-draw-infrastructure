@@ -16,6 +16,7 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 interface ArtistStackProps extends cdk.StackProps {
   table: dynamodb.TableV2;
   queue: sqs.Queue;
+  artBucket: s3.Bucket;
   userPool: cognito.UserPool;
 }
 
@@ -57,13 +58,18 @@ export class ArtistStack extends cdk.Stack {
       }]
     });
 
+    // # Migrate the data
+    // OLD_BUCKET="old-artist-stack-artbucket-xxxxx"
+    // NEW_BUCKET="new-datastack-artbucket-xxxxx"
+    // aws s3 sync s3://$OLD_BUCKET s3://$NEW_BUCKET
+
     const fn = new lambda.Function(this, 'Function', {
       runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromInline('print("placeholder")'),
       environment: {
         "TABLE_NAME": props.table.tableName,
-        "BUCKET_NAME": artBucket.bucketName,
+        "BUCKET_NAME": props.artBucket.bucketName,
         "USER_POOL_ID": props.userPool.userPoolId,
         "SES_CONFIGURATION_SET": configurationSet.configurationSetName,
         "SES_FROM_EMAIL": fromEmail.stringValue,
@@ -76,8 +82,8 @@ export class ArtistStack extends cdk.Stack {
     }));
     props.queue.grantConsumeMessages(fn);
     props.table.grantReadWriteData(fn);
-    artBucket.grantRead(fn);
-    artBucket.grantPut(fn);
+    props.artBucket.grantRead(fn);
+    props.artBucket.grantPut(fn);
     fn.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [

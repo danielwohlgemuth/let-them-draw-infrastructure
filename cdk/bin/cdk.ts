@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
 import { DatabaseStack } from '../lib/database-stack';
-import { QueueStack } from '../lib/queue-stack';
+import { DataStack } from '../lib/data-stack';
 import { AwsPipelineStack } from '../lib/aws-pipeline-stack';
 import { ReceptionistStack } from '../lib/receptionist-stack';
 import { WebsiteStack } from '../lib/website-stack';
@@ -12,12 +12,13 @@ const app = new cdk.App();
 cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
 const databaseStack = new DatabaseStack(app, 'DatabaseStack3', {});
-const queueStack = new QueueStack(app, 'QueueStack', {});
+const dataStack = new DataStack(app, 'DataStack', { table: databaseStack.table });
 new AwsPipelineStack(app, 'AwsPipelineStack', {});
-const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', { table: databaseStack.table, queue: queueStack.queue });
+const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', { table: dataStack.table, queue: dataStack.queue });
 const websiteStack = new WebsiteStack(app, 'WebsiteStack', { httpApi: receptionistStack.httpApi });
 new ArtistStack(app, 'ArtistStack', {
-    table: databaseStack.table,
-    queue: queueStack.queue,
+    table: dataStack.table,
+    artBucket: dataStack.artBucket,
+    queue: dataStack.queue,
     userPool: websiteStack.userPool
 });
