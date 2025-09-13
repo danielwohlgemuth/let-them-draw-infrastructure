@@ -26,16 +26,6 @@ export class ReceptionistStack extends cdk.Stack {
     const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
     cdk.Tags.of(this).add('Environment', environment.stringValue);
 
-    const bucket = new s3.Bucket(this, 'Bucket', {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-      versioned: true,
-      lifecycleRules: [{
-        abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
-        noncurrentVersionExpiration: cdk.Duration.days(1),
-      }]
-    });
-
     const lambdaVersion = ssm.StringParameter.fromStringParameterName(this, 'LambdaVersionParam', '/let-them-draw/receptionist-lambda-version');
     const fn = new lambda.Function(this, 'Function', {
         runtime: lambda.Runtime.PYTHON_3_13,
@@ -90,16 +80,6 @@ export class ReceptionistStack extends cdk.Stack {
     role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSCloudFormationFullAccess'));
     role.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: ['s3:PutObject'],
-      resources: [`${bucket.bucketArn}/*`]
-    }));
-    role.addToPolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: ['s3:ListBucketVersions'],
-      resources: [bucket.bucketArn]
-    }));
-    role.addToPolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
       actions: ['lambda:UpdateFunctionCode'],
       resources: [fn.functionArn]
     }));
@@ -124,10 +104,7 @@ export class ReceptionistStack extends cdk.Stack {
                 'cd package',
                 'zip -r ../lambda.zip .',
                 'cd ..',
-                `aws s3 cp lambda.zip s3://${bucket.bucketName}/lambda.zip`,
-                `VERSION_ID=$(aws s3api list-object-versions --bucket ${bucket.bucketName} --prefix lambda.zip --query "Versions[?IsLatest].VersionId" --output text)`,
                 `aws lambda update-function-code --function-name ${fn.functionName} --zip-file fileb://lambda.zip`,
-                'aws ssm put-parameter --name "/let-them-draw/receptionist-lambda-version" --value "$VERSION_ID" --type "String" --overwrite'
               ]
             }
           },
