@@ -48,21 +48,6 @@ export class ArtistStack extends cdk.Stack {
       },
     });
 
-    const artBucket = new s3.Bucket(this, 'ArtBucket', {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-      versioned: true,
-      lifecycleRules: [{
-        abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
-        noncurrentVersionExpiration: cdk.Duration.days(1),
-      }]
-    });
-
-    // # Migrate the data
-    // OLD_BUCKET="old-artist-stack-artbucket-xxxxx"
-    // NEW_BUCKET="new-datastack-artbucket-xxxxx"
-    // aws s3 sync s3://$OLD_BUCKET s3://$NEW_BUCKET
-
     const fn = new lambda.Function(this, 'Function', {
       runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',

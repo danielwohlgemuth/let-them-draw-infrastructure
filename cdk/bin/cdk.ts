@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { DatabaseStack } from '../lib/database-stack';
 import { DataStack } from '../lib/data-stack';
 import { AwsPipelineStack } from '../lib/aws-pipeline-stack';
 import { ReceptionistStack } from '../lib/receptionist-stack';
@@ -11,8 +10,7 @@ const app = new cdk.App();
 
 cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
-const databaseStack = new DatabaseStack(app, 'DatabaseStack3', {});
-const dataStack = new DataStack(app, 'DataStack', { table: databaseStack.table });
+const dataStack = new DataStack(app, 'DataStack', {});
 new AwsPipelineStack(app, 'AwsPipelineStack', {});
 const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', { table: dataStack.table, queue: dataStack.queue });
 const websiteStack = new WebsiteStack(app, 'WebsiteStack', { httpApi: receptionistStack.httpApi });
