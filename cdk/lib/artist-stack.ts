@@ -125,9 +125,25 @@ export class ArtistStack extends cdk.Stack {
           filePathsIncludes: [
             'src/*',
             'src/**/*',
+            'tests/*',
+            'tests/**/*',
+            'uv.lock'
           ]
         }]
       }
+    });
+
+    const reportBucket = new s3.Bucket(this, 'ReportBucket', {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      versioned: false,
+    });
+
+    const testReportGroup = new codebuild.ReportGroup(this, 'ArtistReportGroup', {
+      type: codebuild.ReportGroupType.CODE_COVERAGE,
+      exportBucket: reportBucket,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      deleteReports: true,
     });
 
     const role = new iam.Role(this, 'Role', {
@@ -139,18 +155,43 @@ export class ArtistStack extends cdk.Stack {
       actions: ['lambda:UpdateFunctionCode'],
       resources: [fn.functionArn]
     }));
+    role.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'codebuild:CreateReport',
+        'codebuild:UpdateReport',
+        'codebuild:BatchPutTestCases',
+        'codebuild:BatchPutCodeCoverages',
+      ],
+      resources: [testReportGroup.reportGroupArn]
+    }));
+
+    reportBucket.grantReadWrite(role);
 
     const deployAction = new codepipeline_actions.CodeBuildAction({
       actionName: 'DeployStacks',
-      project: new codebuild.PipelineProject(this, 'DeployProject', {
+      project: new codebuild.PipelineProject(this, 'ArtistProject', {
         buildSpec: codebuild.BuildSpec.fromObject({
           version: '0.2',
           phases: {
+            install: {
+              commands: [
+                'curl -LsSf https://astral.sh/uv/install.sh | sh',
+                '. $HOME/.local/bin/env',
+                'uv sync',
+              ]
+            },
+            pre_build: {
+              commands: [
+                'uv run coverage run --source=src -m pytest tests/',
+                'uv run coverage xml',
+              ]
+            },
             build: {
               commands: [
-                'echo "Packaging Lambda code..."',
                 'mkdir package',
-                'pip install -r requirements.txt --python-version 3.13 --platform manylinux2014_x86_64 --target package/ --only-binary=:all:',
+                'uv export --format requirements-txt --python 3.13 --no-hashes --no-dev > requirements.txt',
+                'uv pip install -r requirements.txt --python-version 3.13 --target package/ --only-binary=:all:',
                 'cp -r src/* ./package/',
                 'cd package',
                 'zip -r ../lambda.zip .',
@@ -159,6 +200,15 @@ export class ArtistStack extends cdk.Stack {
               ]
             }
           },
+          reports: {
+            [testReportGroup.reportGroupArn]: {
+              files: [
+                'coverage.xml'
+              ],
+              'base-directory': '.',
+              'file-format': 'COBERTURAXML'
+            }
+          }
         }),
         role: role
       }),
