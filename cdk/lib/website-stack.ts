@@ -18,6 +18,7 @@ interface WebsiteStackProps extends cdk.StackProps {
 
 export class WebsiteStack extends cdk.Stack {
   userPool: cognito.UserPool;
+  distribution: cloudfront.Distribution;
 
   constructor(scope: Construct, id: string, props: WebsiteStackProps) {
     super(scope, id, props);
@@ -68,6 +69,7 @@ export class WebsiteStack extends cdk.Stack {
         defaultRootObject: 'index.html',
         priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
     });
+    this.distribution = distribution;
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
         pipelineType: codepipeline.PipelineType.V2,

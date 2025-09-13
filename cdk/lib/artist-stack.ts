@@ -12,12 +12,14 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as ses from 'aws-cdk-lib/aws-ses';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 
 interface ArtistStackProps extends cdk.StackProps {
   table: dynamodb.TableV2;
   queue: sqs.Queue;
   artBucket: s3.Bucket;
   userPool: cognito.UserPool;
+  distribution: cloudfront.Distribution;
 }
 
 export class ArtistStack extends cdk.Stack {
@@ -58,6 +60,7 @@ export class ArtistStack extends cdk.Stack {
         "USER_POOL_ID": props.userPool.userPoolId,
         "SES_CONFIGURATION_SET": configurationSet.configurationSetName,
         "SES_FROM_EMAIL": fromEmail.stringValue,
+        "CLOUDFRONT_DOMAIN": props.distribution.distributionDomainName,
       },
     });
     fn.addEventSource(new sources.SqsEventSource(props.queue, {
@@ -73,7 +76,6 @@ export class ArtistStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       actions: [
         'cognito-idp:AdminGetUser',
-        // 'cognito-idp:ListUsers',
       ],
       resources: [props.userPool.userPoolArn],
     }));

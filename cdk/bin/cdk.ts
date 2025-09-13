@@ -18,5 +18,6 @@ new ArtistStack(app, 'ArtistStack', {
     table: dataStack.table,
     artBucket: dataStack.artBucket,
     queue: dataStack.queue,
-    userPool: websiteStack.userPool
+    userPool: websiteStack.userPool,
+    distribution: websiteStack.distribution
 });
