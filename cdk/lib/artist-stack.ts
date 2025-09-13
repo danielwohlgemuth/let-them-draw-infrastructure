@@ -42,7 +42,7 @@ export class ArtistStack extends cdk.Stack {
       template: {
         templateName: 'ArtworkNotification',
         subjectPart: 'Your Art is Ready!',
-        htmlPart: '<h1>Hello,</h1><p>Your artwork is ready!</p><p>You can see it at {{artworkUrl}}</p>',
+        htmlPart: '<p>Hello,</p><p style="margin-top:16px;">Your artwork is ready!</p><p style="margin-top:16px;">You can see it at <a href="{{artworkUrl}}">{{artworkUrl}}</a></p>',
         textPart: 'Hello,\n\nYour artwork is ready!\nYou can see it at {{artworkUrl}}'
       },
     });
@@ -90,9 +90,28 @@ export class ArtistStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       actions: [
         'ses:SendEmail',
-        'ses:SendRawEmail',
       ],
-      resources: ['*'], // TODO: Figure out how this can be made more restrictive
+      resources: [`arn:aws:ses:${this.region}:${this.account}:identity/*`],
+    }));
+    fn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'ses:SendTemplatedEmail',
+      ],
+      resources: [
+        `arn:aws:ses:${this.region}:${this.account}:template/ArtworkNotification`,
+        `arn:aws:ses:${this.region}:${this.account}:configuration-set/*`,
+        `arn:aws:ses:${this.region}:${this.account}:identity/*`
+      ],
+    }));
+    fn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'ssm:GetParameter',
+      ],
+      resources: [
+        `arn:aws:ssm:${this.region}:${this.account}:parameter/let-them-draw/from-email`,
+      ],
     }));
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {

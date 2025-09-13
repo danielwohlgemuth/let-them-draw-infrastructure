@@ -111,6 +111,17 @@ Setup the from-email parameter
 5. Click on "Create parameter"
 
 
+Note that when SES is in sandbox mode, every email address needs to be verified.
+To verify an email address:
+
+1. Navigate to Amazon Simple Email Service
+2. Switch to Identities
+3. Click on "Create identity"
+4. Set Identity type to Email address
+5. Enter the email address
+6. Click on "Create identity"
+7. Click on the verification link in the email that was sent
+
 ```bash
 cdk deploy --all
 ```
