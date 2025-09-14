@@ -10,10 +10,12 @@ import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 
 interface ReceptionistStackProps extends cdk.StackProps {
   table: dynamodb.TableV2;
   queue: sqs.Queue;
+  artBucket: s3.Bucket;
 }
 
 export class ReceptionistStack extends cdk.Stack {
@@ -25,7 +27,6 @@ export class ReceptionistStack extends cdk.Stack {
     const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
     cdk.Tags.of(this).add('Environment', environment.stringValue);
 
-    const lambdaVersion = ssm.StringParameter.fromStringParameterName(this, 'LambdaVersionParam', '/let-them-draw/receptionist-lambda-version');
     const fn = new lambda.Function(this, 'Function', {
         runtime: lambda.Runtime.PYTHON_3_13,
         handler: 'lambda_function.lambda_handler',
@@ -33,10 +34,12 @@ export class ReceptionistStack extends cdk.Stack {
         environment: {
           "TABLE_NAME": props.table.tableName,
           "QUEUE_NAME": props.queue.queueName,
+          "BUCKET_NAME": props.artBucket.bucketName,
         },
     });
     props.queue.grantSendMessages(fn);
     props.table.grantReadWriteData(fn);
+    props.artBucket.grantRead(fn);
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineType: codepipeline.PipelineType.V2
@@ -81,11 +84,6 @@ export class ReceptionistStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       actions: ['lambda:UpdateFunctionCode'],
       resources: [fn.functionArn]
-    }));
-    role.addToPolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: ['ssm:PutParameter'],
-      resources: [lambdaVersion.parameterArn]
     }));
 
     const deployAction = new codepipeline_actions.CodeBuildAction({

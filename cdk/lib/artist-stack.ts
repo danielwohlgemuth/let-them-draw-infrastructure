@@ -70,7 +70,6 @@ export class ArtistStack extends cdk.Stack {
     }));
     props.queue.grantConsumeMessages(fn);
     props.table.grantReadWriteData(fn);
-    props.artBucket.grantRead(fn);
     props.artBucket.grantPut(fn);
     fn.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,

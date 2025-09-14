@@ -12,7 +12,11 @@ cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
 const dataStack = new DataStack(app, 'DataStack', {});
 new AwsPipelineStack(app, 'AwsPipelineStack', {});
-const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', { table: dataStack.table, queue: dataStack.queue });
+const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
+    table: dataStack.table,
+    queue: dataStack.queue,
+    artBucket: dataStack.artBucket,
+});
 const websiteStack = new WebsiteStack(app, 'WebsiteStack', { httpApi: receptionistStack.httpApi });
 new ArtistStack(app, 'ArtistStack', {
     table: dataStack.table,
