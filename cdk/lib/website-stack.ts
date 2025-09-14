@@ -102,6 +102,59 @@ export class WebsiteStack extends cdk.Stack {
       }
     });
 
+    const userPool = new cognito.UserPool(this, 'UserPool', {
+      selfSignUpEnabled: true,
+      signInCaseSensitive: false,
+      signInAliases: {
+        email: true
+      },
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: true
+        }
+      },
+      passwordPolicy: {
+        minLength: 10,
+        requireDigits: false,
+        requireLowercase: false,
+        requireSymbols: false,
+        requireUppercase: false
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY
+    });
+    this.userPool = userPool;
+
+    const devEnvironment = new cdk.CfnCondition(this, 'CfnCondition', {
+      expression: cdk.Fn.conditionEquals(environment.stringValue, 'dev'),
+    });
+
+    const logoutUrls: any[] = [
+      `https://${distribution.domainName}/`,
+      cdk.Fn.conditionIf(devEnvironment.logicalId, 'http://localhost:3000/', cdk.Aws.NO_VALUE),
+    ];
+
+    const userPoolClient = userPool.addClient('UserPoolClient', {
+      oAuth: {
+        flows: {
+          authorizationCodeGrant: true,
+          implicitCodeGrant: true
+        },
+        scopes: [
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.PROFILE
+        ],
+        callbackUrls: logoutUrls,
+        logoutUrls: logoutUrls,
+      },
+      accessTokenValidity: cdk.Duration.hours(1),
+      idTokenValidity: cdk.Duration.hours(1),
+      refreshTokenValidity: cdk.Duration.days(30),
+      preventUserExistenceErrors: true,
+    });
+
     const buildOutput = new codepipeline.Artifact();
     pipeline.addStage({
         stageName: 'Build',
@@ -110,7 +163,23 @@ export class WebsiteStack extends cdk.Stack {
                 actionName: 'Build',
                 input: sourceOutput,
                 outputs: [buildOutput],
-                project: new  codebuild.Project(this, 'Project', {
+                project: new codebuild.Project(this, 'WebsiteProject', {
+                    environment: {
+                        environmentVariables: {
+                            'NEXT_PUBLIC_COGNITO_AUTHORITY': {
+                                value: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`
+                            },
+                            'NEXT_PUBLIC_COGNITO_DOMAIN': {
+                                value: distribution.domainName
+                            },
+                            'NEXT_PUBLIC_COGNITO_CLIENT_ID': {
+                                value: userPoolClient.userPoolClientId
+                            },
+                            'NEXT_PUBLIC_LOGOUT_URL': {
+                                value: `https://${distribution.domainName}/`
+                            }
+                        }
+                    },
                     buildSpec: codebuild.BuildSpec.fromObject({
                         'version': '0.2',
                         'phases': {
@@ -144,63 +213,6 @@ export class WebsiteStack extends cdk.Stack {
                 bucket: bucket
             })
         ]
-    });
-
-    const userPool = new cognito.UserPool(this, 'UserPool', {
-      selfSignUpEnabled: true,
-      signInCaseSensitive: false,
-      signInAliases: {
-        email: true
-      },
-      standardAttributes: {
-        email: {
-          required: true,
-          mutable: true
-        }
-      },
-      passwordPolicy: {
-        minLength: 10,
-        requireDigits: false,
-        requireLowercase: false,
-        requireSymbols: false,
-        requireUppercase: false
-      },
-      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
-      removalPolicy: cdk.RemovalPolicy.DESTROY
-    });
-    this.userPool = userPool;
-
-    const devEnvironment = new cdk.CfnCondition(this, 'CfnCondition', {
-      expression: cdk.Fn.conditionEquals(environment.stringValue, 'dev'),
-    });
-
-    const callbackUrls: any[] = [
-      `https://${distribution.domainName}/auth/callback`,
-      cdk.Fn.conditionIf(devEnvironment.logicalId, 'http://localhost:3000/auth/callback', cdk.Aws.NO_VALUE),
-    ];
-    const logoutUrls: any[] = [
-      `https://${distribution.domainName}/`,
-      cdk.Fn.conditionIf(devEnvironment.logicalId, 'http://localhost:3000/', cdk.Aws.NO_VALUE),
-    ];
-
-    const userPoolClient = userPool.addClient('UserPoolClient', {
-      oAuth: {
-        flows: {
-          authorizationCodeGrant: true,
-          implicitCodeGrant: true
-        },
-        scopes: [
-          cognito.OAuthScope.OPENID,
-          cognito.OAuthScope.EMAIL,
-          cognito.OAuthScope.PROFILE
-        ],
-        callbackUrls: callbackUrls,
-        logoutUrls: logoutUrls,
-      },
-      accessTokenValidity: cdk.Duration.hours(1),
-      idTokenValidity: cdk.Duration.hours(1),
-      refreshTokenValidity: cdk.Duration.days(30),
-      preventUserExistenceErrors: true,
     });
 
     userPool.addDomain('UserPoolDomain', {
