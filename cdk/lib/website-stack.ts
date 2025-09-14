@@ -9,6 +9,7 @@ import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -214,6 +215,35 @@ export class WebsiteStack extends cdk.Stack {
                 actionName: 'Deploy',
                 input: buildOutput,
                 bucket: bucket
+            }),
+            new codepipeline_actions.CodeBuildAction({
+                actionName: 'InvalidateCache',
+                input: buildOutput,
+                project: new codebuild.Project(this, 'CacheInvalidationProject', {
+                    environment: {
+                        environmentVariables: {
+                            'DISTRIBUTION_ID': {
+                                value: distribution.distributionId
+                            }
+                        }
+                    },
+                    buildSpec: codebuild.BuildSpec.fromObject({
+                        'version': '0.2',
+                        'phases': {
+                            'build': {
+                                'commands': [
+                                    'aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"'
+                                ]
+                            }
+                        }
+                    }),
+                    role: new iam.Role(this, 'CacheInvalidationRole', {
+                        assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
+                        managedPolicies: [
+                            iam.ManagedPolicy.fromAwsManagedPolicyName('CloudFrontFullAccess')
+                        ]
+                    })
+                })
             })
         ]
     });
