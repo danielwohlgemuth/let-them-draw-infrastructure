@@ -166,6 +166,9 @@ export class WebsiteStack extends cdk.Stack {
                 project: new codebuild.Project(this, 'WebsiteProject', {
                     environment: {
                         environmentVariables: {
+                            'NEXT_PUBLIC_BACKEND_URL': {
+                                value: ''
+                            },
                             'NEXT_PUBLIC_COGNITO_AUTHORITY': {
                                 value: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`
                             },
@@ -177,7 +180,7 @@ export class WebsiteStack extends cdk.Stack {
                             },
                             'NEXT_PUBLIC_LOGOUT_URL': {
                                 value: `https://${distribution.domainName}/`
-                            }
+                            },
                         }
                     },
                     buildSpec: codebuild.BuildSpec.fromObject({
