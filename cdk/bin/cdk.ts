@@ -5,6 +5,7 @@ import { AwsPipelineStack } from '../lib/aws-pipeline-stack';
 import { ReceptionistStack } from '../lib/receptionist-stack';
 import { WebsiteStack } from '../lib/website-stack';
 import { ArtistStack } from '../lib/artist-stack';
+import { PlaceholderStack } from '../lib/placeholder-stack';
 
 const app = new cdk.App();
 
@@ -18,7 +19,6 @@ const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
     artBucket: dataStack.artBucket,
 });
 const websiteStack = new WebsiteStack(app, 'WebsiteStack', {
-    httpApi: receptionistStack.httpApi, // TODO: Remove this
     receptionistFunction: receptionistStack.function
 });
 new ArtistStack(app, 'ArtistStack', {
@@ -27,4 +27,8 @@ new ArtistStack(app, 'ArtistStack', {
     queue: dataStack.queue,
     userPool: websiteStack.userPool,
     distribution: websiteStack.distribution
+});
+
+new PlaceholderStack(app, 'PlaceholderStack', {
+    httpApi: receptionistStack.httpApi,
 });

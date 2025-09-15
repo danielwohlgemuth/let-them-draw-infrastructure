@@ -16,7 +16,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 interface WebsiteStackProps extends cdk.StackProps {
-  httpApi: apigwv2.HttpApi; // TODO: Remove this
   receptionistFunction: lambda.Function;
 }
 
@@ -100,8 +99,7 @@ export class WebsiteStack extends cdk.Stack {
         additionalBehaviors: {
             '/api/*': {
                 origin: new origins.HttpOrigin(
-                  props.httpApi.url // TODO: Remove this
-                  // httpApi.url
+                  httpApi.url
                     ?.replace(/^https?:\/\//, '')
                     .replace(/\/$/, '')!
                 ),
