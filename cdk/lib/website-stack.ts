@@ -4,22 +4,26 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as fs from 'fs';
 import * as path from 'path';
 
 interface WebsiteStackProps extends cdk.StackProps {
-  httpApi: apigwv2.HttpApi;
+  httpApi: apigwv2.HttpApi; // TODO: Remove this
+  receptionistFunction: lambda.Function;
 }
 
 export class WebsiteStack extends cdk.Stack {
   userPool: cognito.UserPool;
   distribution: cloudfront.Distribution;
+  httpApi: apigwv2.HttpApi;
 
   constructor(scope: Construct, id: string, props: WebsiteStackProps) {
     super(scope, id, props);
@@ -34,6 +38,57 @@ export class WebsiteStack extends cdk.Stack {
         autoDeleteObjects: true,
     });
 
+    const userPool = new cognito.UserPool(this, 'UserPool', {
+      selfSignUpEnabled: true,
+      signInCaseSensitive: false,
+      signInAliases: {
+        email: true
+      },
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: true
+        }
+      },
+      passwordPolicy: {
+        minLength: 10,
+        requireDigits: false,
+        requireLowercase: false,
+        requireSymbols: false,
+        requireUppercase: false
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY
+    });
+    this.userPool = userPool;
+
+    const receptionistIntegration = new integrations.HttpLambdaIntegration('ReceptionistIntegration', props.receptionistFunction);
+
+    const httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
+      defaultIntegration: receptionistIntegration,
+    });
+    this.httpApi = httpApi;
+
+    const jwtAuthorizer = new apigwv2.HttpAuthorizer(this, 'CognitoJwtAuthorizer', {
+      httpApi: httpApi,
+      type: apigwv2.HttpAuthorizerType.JWT,
+      identitySource: ['$request.header.Authorization'],
+      jwtAudience: [userPool.userPoolId],
+      jwtIssuer: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`,
+    });
+
+    httpApi.addRoutes({
+        path: '/',
+        methods: [apigwv2.HttpMethod.ANY],
+        integration: receptionistIntegration,
+        authorizer: {
+          bind: () => ({
+            authorizerId: jwtAuthorizer.authorizerId,
+            authorizationType: 'JWT',
+          }),
+        },
+    });
+
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
         defaultBehavior: {
             origin: origins.S3BucketOrigin.withOriginAccessControl(bucket),
@@ -45,7 +100,8 @@ export class WebsiteStack extends cdk.Stack {
         additionalBehaviors: {
             '/api/*': {
                 origin: new origins.HttpOrigin(
-                  props.httpApi.url
+                  props.httpApi.url // TODO: Remove this
+                  // httpApi.url
                     ?.replace(/^https?:\/\//, '')
                     .replace(/\/$/, '')!
                 ),
@@ -102,30 +158,6 @@ export class WebsiteStack extends cdk.Stack {
         }]
       }
     });
-
-    const userPool = new cognito.UserPool(this, 'UserPool', {
-      selfSignUpEnabled: true,
-      signInCaseSensitive: false,
-      signInAliases: {
-        email: true
-      },
-      standardAttributes: {
-        email: {
-          required: true,
-          mutable: true
-        }
-      },
-      passwordPolicy: {
-        minLength: 10,
-        requireDigits: false,
-        requireLowercase: false,
-        requireSymbols: false,
-        requireUppercase: false
-      },
-      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
-      removalPolicy: cdk.RemovalPolicy.DESTROY
-    });
-    this.userPool = userPool;
 
     const devEnvironment = new cdk.CfnCondition(this, 'CfnCondition', {
       expression: cdk.Fn.conditionEquals(environment.stringValue, 'dev'),

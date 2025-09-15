@@ -19,7 +19,8 @@ interface ReceptionistStackProps extends cdk.StackProps {
 }
 
 export class ReceptionistStack extends cdk.Stack {
-  public readonly httpApi: apigwv2.HttpApi;
+  public readonly httpApi: apigwv2.HttpApi; // TODO: Remove this
+  public readonly function: lambda.Function;
 
   constructor(scope: Construct, id: string, props: ReceptionistStackProps) {
     super(scope, id, props);
@@ -37,6 +38,7 @@ export class ReceptionistStack extends cdk.Stack {
           "BUCKET_NAME": props.artBucket.bucketName,
         },
     });
+    this.function = fn;
     props.queue.grantSendMessages(fn);
     props.table.grantReadWriteData(fn);
     props.artBucket.grantRead(fn);
@@ -116,6 +118,7 @@ export class ReceptionistStack extends cdk.Stack {
       actions: [deployAction],
     });
 
+    // TODO: Remove this
     const receptionistIntegration = new integrations.HttpLambdaIntegration('ReceptionistIntegration', fn);
     const httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
       defaultIntegration: receptionistIntegration,

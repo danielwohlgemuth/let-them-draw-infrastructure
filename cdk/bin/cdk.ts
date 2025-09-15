@@ -17,7 +17,10 @@ const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
     queue: dataStack.queue,
     artBucket: dataStack.artBucket,
 });
-const websiteStack = new WebsiteStack(app, 'WebsiteStack', { httpApi: receptionistStack.httpApi });
+const websiteStack = new WebsiteStack(app, 'WebsiteStack', {
+    httpApi: receptionistStack.httpApi, // TODO: Remove this
+    receptionistFunction: receptionistStack.function
+});
 new ArtistStack(app, 'ArtistStack', {
     table: dataStack.table,
     artBucket: dataStack.artBucket,
