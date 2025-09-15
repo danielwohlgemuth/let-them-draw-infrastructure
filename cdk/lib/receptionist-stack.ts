@@ -1,7 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
-import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
@@ -19,7 +17,6 @@ interface ReceptionistStackProps extends cdk.StackProps {
 }
 
 export class ReceptionistStack extends cdk.Stack {
-  public readonly httpApi: apigwv2.HttpApi; // TODO: Remove this
   public readonly function: lambda.Function;
 
   constructor(scope: Construct, id: string, props: ReceptionistStackProps) {
@@ -116,18 +113,6 @@ export class ReceptionistStack extends cdk.Stack {
     pipeline.addStage({
       stageName: 'Deploy',
       actions: [deployAction],
-    });
-
-    // TODO: Remove this
-    const receptionistIntegration = new integrations.HttpLambdaIntegration('ReceptionistIntegration', fn);
-    const httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
-      defaultIntegration: receptionistIntegration,
-    });
-    this.httpApi = httpApi;
-    httpApi.addRoutes({
-        path: '/',
-        methods: [apigwv2.HttpMethod.ANY],
-        integration: receptionistIntegration,
     });
 
     new cdk.CfnOutput(this, 'FunctionName', {
