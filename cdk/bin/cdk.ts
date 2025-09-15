@@ -5,7 +5,6 @@ import { AwsPipelineStack } from '../lib/aws-pipeline-stack';
 import { ReceptionistStack } from '../lib/receptionist-stack';
 import { WebsiteStack } from '../lib/website-stack';
 import { ArtistStack } from '../lib/artist-stack';
-import { PlaceholderStack } from '../lib/placeholder-stack';
 
 const app = new cdk.App();
 
@@ -13,7 +12,6 @@ cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
 const dataStack = new DataStack(app, 'DataStack', {});
 new AwsPipelineStack(app, 'AwsPipelineStack', {});
-new PlaceholderStack(app, 'PlaceholderStack', {});
 const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
     table: dataStack.table,
     queue: dataStack.queue,
