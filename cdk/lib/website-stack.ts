@@ -63,30 +63,8 @@ export class WebsiteStack extends cdk.Stack {
 
     const receptionistIntegration = new integrations.HttpLambdaIntegration('ReceptionistIntegration', props.receptionistFunction);
 
-    const httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
-      defaultIntegration: receptionistIntegration,
-    });
+    const httpApi = new apigwv2.HttpApi(this, 'HttpApi', {});
     this.httpApi = httpApi;
-
-    const jwtAuthorizer = new apigwv2.HttpAuthorizer(this, 'CognitoJwtAuthorizer', {
-      httpApi: httpApi,
-      type: apigwv2.HttpAuthorizerType.JWT,
-      identitySource: ['$request.header.Authorization'],
-      jwtAudience: [userPool.userPoolId],
-      jwtIssuer: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`,
-    });
-
-    httpApi.addRoutes({
-        path: '/',
-        methods: [apigwv2.HttpMethod.ANY],
-        integration: receptionistIntegration,
-        authorizer: {
-          bind: () => ({
-            authorizerId: jwtAuthorizer.authorizerId,
-            authorizationType: 'JWT',
-          }),
-        },
-    });
 
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
         defaultBehavior: {
@@ -284,6 +262,38 @@ export class WebsiteStack extends cdk.Stack {
       },
       managedLoginVersion: cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN
     })
+
+    const jwtAuthorizer = new apigwv2.HttpAuthorizer(this, 'CognitoJwtAuthorizer', {
+      httpApi: httpApi,
+      type: apigwv2.HttpAuthorizerType.JWT,
+      identitySource: ['$request.header.Authorization'],
+      jwtAudience: [userPoolClient.userPoolClientId],
+      jwtIssuer: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`,
+    });
+
+    httpApi.addRoutes({
+        path: '/',
+        methods: [apigwv2.HttpMethod.ANY],
+        integration: receptionistIntegration,
+        authorizer: {
+          bind: () => ({
+            authorizerId: jwtAuthorizer.authorizerId,
+            authorizationType: 'JWT',
+          }),
+        },
+    });
+
+    httpApi.addRoutes({
+      path: '/{proxy+}',
+      methods: [apigwv2.HttpMethod.ANY],
+      integration: receptionistIntegration,
+      authorizer: {
+        bind: () => ({
+          authorizerId: jwtAuthorizer.authorizerId,
+          authorizationType: 'JWT',
+        }),
+      },
+    });
 
     const cognitoBackgroundSvg = fs.readFileSync(path.join(__dirname, '../../assets/cognito-background.svg')).toString('base64');
 
