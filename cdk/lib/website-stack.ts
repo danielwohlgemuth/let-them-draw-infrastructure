@@ -12,6 +12,7 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -31,10 +32,10 @@ export class WebsiteStack extends cdk.Stack {
     cdk.Tags.of(this).add('Environment', environment.stringValue);
 
     const bucket = new s3.Bucket(this, 'Bucket', {
-        websiteIndexDocument: 'index.html',
-        websiteErrorDocument: 'index.html',
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
-        autoDeleteObjects: true,
+      websiteIndexDocument: 'index.html',
+      websiteErrorDocument: 'index.html',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
     });
 
     const userPool = new cognito.UserPool(this, 'UserPool', {
@@ -67,45 +68,45 @@ export class WebsiteStack extends cdk.Stack {
     this.httpApi = httpApi;
 
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
-        defaultBehavior: {
-            origin: origins.S3BucketOrigin.withOriginAccessControl(bucket),
-            viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-            allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
-            cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-            originRequestPolicy: cloudfront.OriginRequestPolicy.CORS_S3_ORIGIN,
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(bucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        originRequestPolicy: cloudfront.OriginRequestPolicy.CORS_S3_ORIGIN,
+      },
+      additionalBehaviors: {
+        '/api/*': {
+          origin: new origins.HttpOrigin(
+            httpApi.url
+              ?.replace(/^https?:\/\//, '')
+              .replace(/\/$/, '')!
+          ),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER
+        }
+      },
+      errorResponses: [
+        {
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html'
         },
-        additionalBehaviors: {
-            '/api/*': {
-                origin: new origins.HttpOrigin(
-                  httpApi.url
-                    ?.replace(/^https?:\/\//, '')
-                    .replace(/\/$/, '')!
-                ),
-                viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-                allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-                cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-                originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER
-            }
-        },
-        errorResponses: [
-            {
-                httpStatus: 403,
-                responseHttpStatus: 200,
-                responsePagePath: '/index.html'
-            },
-            {
-                httpStatus: 404,
-                responseHttpStatus: 200,
-                responsePagePath: '/index.html'
-            }
-        ],
-        defaultRootObject: 'index.html',
-        priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html'
+        }
+      ],
+      defaultRootObject: 'index.html',
+      priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
     });
     this.distribution = distribution;
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
-        pipelineType: codepipeline.PipelineType.V2,
+      pipelineType: codepipeline.PipelineType.V2,
     });
 
     const infrastructureBranch = ssm.StringParameter.fromStringParameterName(this, 'ParamInfrastructureBranch', '/let-them-draw/infrastructure-branch');
@@ -166,94 +167,110 @@ export class WebsiteStack extends cdk.Stack {
 
     const buildOutput = new codepipeline.Artifact();
     pipeline.addStage({
-        stageName: 'Build',
-        actions: [
-            new codepipeline_actions.CodeBuildAction({
-                actionName: 'Build',
-                input: sourceOutput,
-                outputs: [buildOutput],
-                project: new codebuild.Project(this, 'WebsiteProject', {
-                    environment: {
-                        environmentVariables: {
-                            'NEXT_PUBLIC_BACKEND_URL': {
-                                value: ''
-                            },
-                            'NEXT_PUBLIC_COGNITO_AUTHORITY': {
-                                value: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`
-                            },
-                            'NEXT_PUBLIC_COGNITO_DOMAIN': {
-                                value: distribution.domainName
-                            },
-                            'NEXT_PUBLIC_COGNITO_CLIENT_ID': {
-                                value: userPoolClient.userPoolClientId
-                            },
-                            'NEXT_PUBLIC_LOGOUT_URL': {
-                                value: `https://${distribution.domainName}/`
-                            },
-                        }
-                    },
-                    buildSpec: codebuild.BuildSpec.fromObject({
-                        'version': '0.2',
-                        'phases': {
-                            'install': {
-                                'commands': [
-                                    'npm install'
-                                ]
-                            },
-                            'build': {
-                                'commands': [
-                                    'npm run build'
-                                ]
-                            }
-                        },
-                        'artifacts': {
-                            'base-directory': 'out',
-                            'files': ['**/*']
-                        }
-                    })
-                })
+      stageName: 'Build',
+      actions: [
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'Build',
+          input: sourceOutput,
+          outputs: [buildOutput],
+          project: new codebuild.Project(this, 'WebsiteProject', {
+            environment: {
+              environmentVariables: {
+                'NEXT_PUBLIC_BACKEND_URL': {
+                  value: ''
+                },
+                'NEXT_PUBLIC_COGNITO_AUTHORITY': {
+                  value: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`
+                },
+                'NEXT_PUBLIC_COGNITO_DOMAIN': {
+                  value: distribution.domainName
+                },
+                'NEXT_PUBLIC_COGNITO_CLIENT_ID': {
+                  value: userPoolClient.userPoolClientId
+                },
+                'NEXT_PUBLIC_LOGOUT_URL': {
+                  value: `https://${distribution.domainName}/`
+                },
+              }
+            },
+            buildSpec: codebuild.BuildSpec.fromObject({
+              'version': '0.2',
+              'phases': {
+                'install': {
+                  'commands': [
+                    'npm install'
+                  ]
+                },
+                'build': {
+                  'commands': [
+                    'npm run build'
+                  ]
+                }
+              },
+              'artifacts': {
+                'base-directory': 'out',
+                'files': ['**/*']
+              }
             }),
-        ]
+            logging: {
+              cloudWatch: {
+                logGroup: new logs.LogGroup(this, 'BuildLogGroup', {
+                  retention: logs.RetentionDays.ONE_WEEK,
+                  removalPolicy: cdk.RemovalPolicy.DESTROY,
+                }),
+              }
+            },
+          })
+        }),
+      ]
     });
 
     pipeline.addStage({
-        stageName: 'Deploy',
-        actions: [
-            new codepipeline_actions.S3DeployAction({
-                actionName: 'Deploy',
-                input: buildOutput,
-                bucket: bucket
+      stageName: 'Deploy',
+      actions: [
+        new codepipeline_actions.S3DeployAction({
+          actionName: 'Deploy',
+          input: buildOutput,
+          bucket: bucket
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'InvalidateCache',
+          input: buildOutput,
+          project: new codebuild.Project(this, 'CacheInvalidationProject', {
+            environment: {
+              environmentVariables: {
+                'DISTRIBUTION_ID': {
+                  value: distribution.distributionId
+                }
+              }
+            },
+            buildSpec: codebuild.BuildSpec.fromObject({
+              'version': '0.2',
+              'phases': {
+                'build': {
+                  'commands': [
+                    'aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"'
+                  ]
+                }
+              }
             }),
-            new codepipeline_actions.CodeBuildAction({
-                actionName: 'InvalidateCache',
-                input: buildOutput,
-                project: new codebuild.Project(this, 'CacheInvalidationProject', {
-                    environment: {
-                        environmentVariables: {
-                            'DISTRIBUTION_ID': {
-                                value: distribution.distributionId
-                            }
-                        }
-                    },
-                    buildSpec: codebuild.BuildSpec.fromObject({
-                        'version': '0.2',
-                        'phases': {
-                            'build': {
-                                'commands': [
-                                    'aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"'
-                                ]
-                            }
-                        }
-                    }),
-                    role: new iam.Role(this, 'CacheInvalidationRole', {
-                        assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
-                        managedPolicies: [
-                            iam.ManagedPolicy.fromAwsManagedPolicyName('CloudFrontFullAccess')
-                        ]
-                    })
-                })
-            })
-        ]
+            role: new iam.Role(this, 'CacheInvalidationRole', {
+              assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
+              managedPolicies: [
+                iam.ManagedPolicy.fromAwsManagedPolicyName('CloudFrontFullAccess')
+              ]
+            }),
+            logging: {
+              cloudWatch: {
+                logGroup: new logs.LogGroup(this, 'CacheInvalidationLogGroup', {
+                  retention: logs.RetentionDays.ONE_WEEK,
+                  removalPolicy: cdk.RemovalPolicy.DESTROY,
+                }),
+              }
+            },
+          })
+        })
+      ]
     });
 
     userPool.addDomain('UserPoolDomain', {
@@ -272,15 +289,15 @@ export class WebsiteStack extends cdk.Stack {
     });
 
     httpApi.addRoutes({
-        path: '/',
-        methods: [apigwv2.HttpMethod.ANY],
-        integration: receptionistIntegration,
-        authorizer: {
-          bind: () => ({
-            authorizerId: jwtAuthorizer.authorizerId,
-            authorizationType: 'JWT',
-          }),
-        },
+      path: '/',
+      methods: [apigwv2.HttpMethod.ANY],
+      integration: receptionistIntegration,
+      authorizer: {
+        bind: () => ({
+          authorizerId: jwtAuthorizer.authorizerId,
+          authorizationType: 'JWT',
+        }),
+      },
     });
 
     httpApi.addRoutes({

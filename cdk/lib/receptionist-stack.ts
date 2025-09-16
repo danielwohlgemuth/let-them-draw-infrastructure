@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
@@ -34,6 +35,10 @@ export class ReceptionistStack extends cdk.Stack {
           "QUEUE_NAME": props.queue.queueName,
           "BUCKET_NAME": props.artBucket.bucketName,
         },
+        logGroup: new logs.LogGroup(this, 'LogGroup', {
+          retention: logs.RetentionDays.ONE_WEEK,
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+        }),
     });
     this.function = fn;
     props.queue.grantSendMessages(fn);
@@ -105,7 +110,15 @@ export class ReceptionistStack extends cdk.Stack {
             }
           },
         }),
-        role: role
+        role: role,
+        logging: {
+          cloudWatch: {
+            logGroup: new logs.LogGroup(this, 'DeployLogGroup', {
+              retention: logs.RetentionDays.ONE_WEEK,
+              removalPolicy: cdk.RemovalPolicy.DESTROY,
+            }),
+          },
+        },
       }),
       input: sourceOutput,
     });

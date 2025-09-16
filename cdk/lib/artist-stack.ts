@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import * as sources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
@@ -62,6 +63,10 @@ export class ArtistStack extends cdk.Stack {
         "SES_FROM_EMAIL": fromEmail.stringValue,
         "CLOUDFRONT_DOMAIN": props.distribution.distributionDomainName,
       },
+      logGroup: new logs.LogGroup(this, 'LogGroup', {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      }),
     });
     fn.addEventSource(new sources.SqsEventSource(props.queue, {
       maxBatchingWindow: cdk.Duration.seconds(5),
@@ -221,7 +226,15 @@ export class ArtistStack extends cdk.Stack {
             }
           }
         }),
-        role: role
+        role: role,
+        logging: {
+          cloudWatch: {
+            logGroup: new logs.LogGroup(this, 'DeployLogGroup', {
+              retention: logs.RetentionDays.ONE_WEEK,
+              removalPolicy: cdk.RemovalPolicy.DESTROY,
+            }),
+          },
+        },
       }),
       input: sourceOutput,
     });

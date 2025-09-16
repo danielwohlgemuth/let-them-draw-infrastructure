@@ -5,6 +5,7 @@ import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as logs from 'aws-cdk-lib/aws-logs';
 
 export class AwsPipelineStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -82,7 +83,15 @@ export class AwsPipelineStack extends cdk.Stack {
             }
           },
         }),
-        role: role
+        role: role,
+        logging: {
+          cloudWatch: {
+            logGroup: new logs.LogGroup(this, 'DeployLogGroup', {
+              retention: logs.RetentionDays.ONE_WEEK,
+              removalPolicy: cdk.RemovalPolicy.DESTROY,
+            }),
+          }
+        },
       }),
       input: sourceOutput,
     });
