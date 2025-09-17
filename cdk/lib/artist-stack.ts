@@ -55,6 +55,8 @@ export class ArtistStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromInline('print("placeholder")'),
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 256,
       environment: {
         "TABLE_NAME": props.table.tableName,
         "BUCKET_NAME": props.artBucket.bucketName,
