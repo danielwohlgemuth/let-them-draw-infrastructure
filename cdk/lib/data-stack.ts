@@ -35,7 +35,15 @@ export class DataStack extends cdk.Stack {
       writeCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
     });
 
-    const queue = new sqs.Queue(this, 'Queue');
+    const queue = new sqs.Queue(this, 'Queue', {
+      deadLetterQueue: {
+        queue: new sqs.Queue(this, 'DeadLetterQueue', {
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+        }),
+        maxReceiveCount: 3,
+      },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
     this.queue = queue;
 
     const artBucket = new s3.Bucket(this, 'ArtBucket', {
