@@ -40,7 +40,7 @@ export class DataStack extends cdk.Stack {
         queue: new sqs.Queue(this, 'DeadLetterQueue', {
           removalPolicy: cdk.RemovalPolicy.DESTROY,
         }),
-        maxReceiveCount: 3,
+        maxReceiveCount: 1,
       },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
