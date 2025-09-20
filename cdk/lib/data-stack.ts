@@ -9,6 +9,7 @@ export class DataStack extends cdk.Stack {
   public readonly table: dynamodb.TableV2;
   public readonly queue: sqs.Queue;
   public readonly artBucket: s3.Bucket;
+  public readonly deadLetterQueue: sqs.Queue;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -35,11 +36,14 @@ export class DataStack extends cdk.Stack {
       writeCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
     });
 
+    const deadLetterQueue = new sqs.Queue(this, 'DeadLetterQueue', {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    this.deadLetterQueue = deadLetterQueue;
+
     const queue = new sqs.Queue(this, 'Queue', {
       deadLetterQueue: {
-        queue: new sqs.Queue(this, 'DeadLetterQueue', {
-          removalPolicy: cdk.RemovalPolicy.DESTROY,
-        }),
+        queue: deadLetterQueue,
         maxReceiveCount: 1,
       },
       removalPolicy: cdk.RemovalPolicy.DESTROY,

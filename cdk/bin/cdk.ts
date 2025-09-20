@@ -5,13 +5,14 @@ import { AwsPipelineStack } from '../lib/aws-pipeline-stack';
 import { ReceptionistStack } from '../lib/receptionist-stack';
 import { WebsiteStack } from '../lib/website-stack';
 import { ArtistStack } from '../lib/artist-stack';
+import { MonitoringStack } from '../lib/monitoring-stack';
 
 const app = new cdk.App();
 
 cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
 const dataStack = new DataStack(app, 'DataStack', {});
-new AwsPipelineStack(app, 'AwsPipelineStack', {});
+const awsPipelineStack = new AwsPipelineStack(app, 'AwsPipelineStack', {});
 const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
     table: dataStack.table,
     queue: dataStack.queue,
@@ -20,10 +21,17 @@ const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
 const websiteStack = new WebsiteStack(app, 'WebsiteStack', {
     receptionistFunction: receptionistStack.function
 });
-new ArtistStack(app, 'ArtistStack', {
+const artistStack = new ArtistStack(app, 'ArtistStack', {
     table: dataStack.table,
     artBucket: dataStack.artBucket,
     queue: dataStack.queue,
     userPool: websiteStack.userPool,
     distribution: websiteStack.distribution
+});
+new MonitoringStack(app, 'MonitoringStack', {
+    deadLetterQueue: dataStack.deadLetterQueue,
+    artistPipeline: artistStack.pipeline,
+    receptionistPipeline: receptionistStack.pipeline,
+    websitePipeline: websiteStack.pipeline,
+    awsPipeline: awsPipelineStack.pipeline,
 });

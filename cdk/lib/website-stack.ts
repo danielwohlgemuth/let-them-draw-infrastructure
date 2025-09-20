@@ -21,9 +21,10 @@ interface WebsiteStackProps extends cdk.StackProps {
 }
 
 export class WebsiteStack extends cdk.Stack {
-  userPool: cognito.UserPool;
-  distribution: cloudfront.Distribution;
-  httpApi: apigwv2.HttpApi;
+  public readonly userPool: cognito.UserPool;
+  public readonly distribution: cloudfront.Distribution;
+  public readonly httpApi: apigwv2.HttpApi;
+  public readonly pipeline: codepipeline.Pipeline;
 
   constructor(scope: Construct, id: string, props: WebsiteStackProps) {
     super(scope, id, props);
@@ -108,6 +109,7 @@ export class WebsiteStack extends cdk.Stack {
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineType: codepipeline.PipelineType.V2,
     });
+    this.pipeline = pipeline;
 
     const infrastructureBranch = ssm.StringParameter.fromStringParameterName(this, 'ParamInfrastructureBranch', '/let-them-draw/infrastructure-branch');
     const githubConnectionArn = ssm.StringParameter.fromStringParameterName(this, 'ParamGithubConnectionArn', '/let-them-draw/github-connection-arn');

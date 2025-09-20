@@ -24,6 +24,7 @@ interface ArtistStackProps extends cdk.StackProps {
 }
 
 export class ArtistStack extends cdk.Stack {
+  public readonly pipeline: codepipeline.Pipeline;
 
   constructor(scope: Construct, id: string, props: ArtistStackProps) {
     super(scope, id, props);
@@ -116,6 +117,7 @@ export class ArtistStack extends cdk.Stack {
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineType: codepipeline.PipelineType.V2
     });
+    this.pipeline = pipeline;
 
     const infrastructureBranch = ssm.StringParameter.fromStringParameterName(this, 'ParamInfrastructureBranch', '/let-them-draw/infrastructure-branch');
     const githubConnectionArn = ssm.StringParameter.fromStringParameterName(this, 'ParamGithubConnectionArn', '/let-them-draw/github-connection-arn');

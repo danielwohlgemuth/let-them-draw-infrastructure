@@ -8,6 +8,8 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as logs from 'aws-cdk-lib/aws-logs';
 
 export class AwsPipelineStack extends cdk.Stack {
+  public readonly pipeline: codepipeline.Pipeline;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -17,6 +19,7 @@ export class AwsPipelineStack extends cdk.Stack {
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineType: codepipeline.PipelineType.V2
     });
+    this.pipeline = pipeline;
 
     const infrastructureBranch = ssm.StringParameter.fromStringParameterName(this, 'ParamInfrastructureBranch', '/let-them-draw/infrastructure-branch');
     const githubConnectionArn = ssm.StringParameter.fromStringParameterName(this, 'ParamGithubConnectionArn', '/let-them-draw/github-connection-arn');
