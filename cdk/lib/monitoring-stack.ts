@@ -65,14 +65,15 @@ export class MonitoringStack extends cdk.Stack {
       period: cdk.Duration.minutes(15),
     });
 
-    new cloudwatch.Alarm(this, 'DlqAlarm', {
+    const dlqAlarm = new cloudwatch.Alarm(this, 'DlqAlarm', {
       metric: dlqMetric,
       threshold: 1,
       evaluationPeriods: 1,
       datapointsToAlarm: 1,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
       alarmDescription: 'Triggers if there is at least one message in the DLQ',
-    }).addAlarmAction({
+    });
+    dlqAlarm.addAlarmAction({
       bind: () => ({ alarmActionArn: dlqAlertTopic.topicArn }),
     });
   }
