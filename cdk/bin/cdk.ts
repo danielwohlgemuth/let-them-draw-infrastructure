@@ -15,6 +15,7 @@ const dataStack = new DataStack(app, 'DataStack', {});
 const awsPipelineStack = new AwsPipelineStack(app, 'AwsPipelineStack', {});
 const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
     table: dataStack.table,
+    shapesTable: dataStack.shapesTable,
     queue: dataStack.queue,
     artBucket: dataStack.artBucket,
 });

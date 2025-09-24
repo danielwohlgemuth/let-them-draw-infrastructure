@@ -28,22 +28,30 @@ The artists take new requests and produce a picture for the client.
 
 A Lambda function takes care of producing the pictures using the SQS queue to retrieve new requests, keeping the related information in the database up-to-date, storing the finished picture in an S3 bucket, and triggers an EventBridge event that in turn uses SNS to notify the client that the picture is ready.
 
-### Database
+### Databases
 
-The database stores information about orders, for example the requirements and the status.
+The art database stores information about orders, for example the requirements and the status.
+
+The shape database stores information about the available shapes and their price.
 
 DynamoDB is used for this.
 
-### Database Schema
+### Art Database Schema
 
-- User Id (primary key)
-- Request Id (secondary key)
+- Request Id (primary key)
+- User Id (secondary key)
 - Request Date (date)
 - Requirements (object (shape, color))
 - Status (string (new, in progress, done))
 - Picture URL (string)
 
-Users are limited to only seeing their own pictures.
+Users are limited to only seeing their own pictures by filtering on User Id in addition to the Request Id.
+
+### Shape Database Schema
+
+- Shape (primary key)
+- Price Id (string)
+- Price (string)
 
 ## Let Them Draw CI/CD Pipeline
 

@@ -10,6 +10,7 @@ export class DataStack extends cdk.Stack {
   public readonly queue: sqs.Queue;
   public readonly artBucket: s3.Bucket;
   public readonly deadLetterQueue: sqs.Queue;
+  public readonly shapesTable: dynamodb.TableV2;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -35,6 +36,14 @@ export class DataStack extends cdk.Stack {
       readCapacity: dynamodb.Capacity.fixed(5),
       writeCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
     });
+
+    const shapesTable = new dynamodb.TableV2(this, 'ShapesTable', {
+      partitionKey: { name: 'Shape', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'PriceId', type: dynamodb.AttributeType.STRING },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      billing: dynamodb.Billing.onDemand(),
+    });
+    this.shapesTable = shapesTable;
 
     const deadLetterQueue = new sqs.Queue(this, 'DeadLetterQueue', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
