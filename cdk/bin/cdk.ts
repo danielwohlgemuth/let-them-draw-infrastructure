@@ -6,6 +6,7 @@ import { ReceptionistStack } from '../lib/receptionist-stack';
 import { WebsiteStack } from '../lib/website-stack';
 import { ArtistStack } from '../lib/artist-stack';
 import { MonitoringStack } from '../lib/monitoring-stack';
+import { PlaceholderStack } from '../lib/placeholder-stack';
 
 const app = new cdk.App();
 
@@ -35,4 +36,7 @@ new MonitoringStack(app, 'MonitoringStack', {
     receptionistPipeline: receptionistStack.pipeline,
     websitePipeline: websiteStack.pipeline,
     awsPipeline: awsPipelineStack.pipeline,
+});
+new PlaceholderStack(app, 'PlaceholderStack', {
+   table: dataStack.shapesTable
 });
