@@ -16,5 +16,9 @@ export class PlaceholderStack extends cdk.Stack {
       value: props.table.tableName,
       description: 'The name of the placeholder table',
     });
+    new cdk.CfnOutput(this, 'TableArn', {
+      value: props.table.tableArn,
+      description: 'The ARN of the placeholder table',
+    });
   }
 }
