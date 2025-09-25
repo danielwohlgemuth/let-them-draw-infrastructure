@@ -12,12 +12,12 @@ const app = new cdk.App();
 
 cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
+new PlaceholderStack(app, 'PlaceholderStack', {});
 const dataStack = new DataStack(app, 'DataStack', {});
 const awsPipelineStack = new AwsPipelineStack(app, 'AwsPipelineStack', {});
 const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
     table: dataStack.table,
     shapesTable: dataStack.shapesTable,
-    shapesTable2: dataStack.shapesTable2,
     queue: dataStack.queue,
     artBucket: dataStack.artBucket,
 });
@@ -37,7 +37,4 @@ new MonitoringStack(app, 'MonitoringStack', {
     receptionistPipeline: receptionistStack.pipeline,
     websitePipeline: websiteStack.pipeline,
     awsPipeline: awsPipelineStack.pipeline,
-});
-new PlaceholderStack(app, 'PlaceholderStack', {
-   table: dataStack.shapesTable
 });

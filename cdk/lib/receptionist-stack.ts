@@ -14,7 +14,6 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 interface ReceptionistStackProps extends cdk.StackProps {
   table: dynamodb.TableV2;
   shapesTable: dynamodb.TableV2;
-  shapesTable2: dynamodb.TableV2;
   queue: sqs.Queue;
   artBucket: s3.Bucket;
 }
@@ -35,7 +34,7 @@ export class ReceptionistStack extends cdk.Stack {
         code: lambda.Code.fromInline('print("placeholder")'),
         environment: {
           "TABLE_NAME": props.table.tableName,
-          "SHAPES_TABLE_NAME": props.shapesTable2.tableName,
+          "SHAPES_TABLE_NAME": props.shapesTable.tableName,
           "QUEUE_NAME": props.queue.queueName,
           "BUCKET_NAME": props.artBucket.bucketName,
         },
@@ -47,7 +46,7 @@ export class ReceptionistStack extends cdk.Stack {
     this.function = fn;
     props.queue.grantSendMessages(fn);
     props.table.grantReadWriteData(fn);
-    props.shapesTable2.grantReadWriteData(fn);
+    props.shapesTable.grantReadWriteData(fn);
     props.artBucket.grantRead(fn);
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
