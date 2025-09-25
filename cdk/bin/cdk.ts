@@ -6,13 +6,11 @@ import { ReceptionistStack } from '../lib/receptionist-stack';
 import { WebsiteStack } from '../lib/website-stack';
 import { ArtistStack } from '../lib/artist-stack';
 import { MonitoringStack } from '../lib/monitoring-stack';
-import { PlaceholderStack } from '../lib/placeholder-stack';
 
 const app = new cdk.App();
 
 cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
-new PlaceholderStack(app, 'PlaceholderStack', {});
 const dataStack = new DataStack(app, 'DataStack', {});
 const awsPipelineStack = new AwsPipelineStack(app, 'AwsPipelineStack', {});
 const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
