@@ -26,6 +26,7 @@ export class ReceptionistStack extends cdk.Stack {
     super(scope, id, props);
 
     const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
+    const stripeApiKey = ssm.StringParameter.fromStringParameterName(this, 'StripeApiKeyParam', '/let-them-draw/stripe-api-key');
     cdk.Tags.of(this).add('Environment', environment.stringValue);
 
     const fn = new lambda.Function(this, 'Function', {
@@ -35,6 +36,7 @@ export class ReceptionistStack extends cdk.Stack {
         environment: {
           "TABLE_NAME": props.table.tableName,
           "SHAPES_TABLE_NAME": props.shapesTable.tableName,
+          "STRIPE_API_KEY": stripeApiKey.stringValue,
           "QUEUE_NAME": props.queue.queueName,
           "BUCKET_NAME": props.artBucket.bucketName,
         },

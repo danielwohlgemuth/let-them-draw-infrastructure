@@ -126,6 +126,15 @@ Setup the from-email parameter
 4. Set Value to an email address that can be verified and will be used as the source address for outgoing emails
 5. Click on "Create parameter"
 
+Setup the stripe-api-key parameter
+
+1. Navigate to Parameter Store
+2. Click on "Create parameter"
+3. Set Name to "/let-them-draw/stripe-api-key"
+4. Set Type to "SecureString"
+5. Set Value to a Stripe API key
+6. Click on "Create parameter"
+
 
 Note that when SES is in sandbox mode, every email address needs to be verified.
 To verify an email address:

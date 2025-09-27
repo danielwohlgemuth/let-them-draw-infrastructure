@@ -69,5 +69,9 @@ export class DataStack extends cdk.Stack {
       }]
     });
     this.artBucket = artBucket;
+
+    new cdk.CfnOutput(this, 'ShapesTableName', {
+      value: shapesTable.tableName,
+    });
   }
 }
