@@ -131,9 +131,16 @@ Setup the stripe-api-key parameter
 1. Navigate to Parameter Store
 2. Click on "Create parameter"
 3. Set Name to "/let-them-draw/stripe-api-key"
-4. Set Type to "SecureString"
-5. Set Value to a Stripe API key
-6. Click on "Create parameter"
+4. Set Value to a Stripe API key
+5. Click on "Create parameter"
+
+Setup the website-url parameter
+
+1. Navigate to Parameter Store
+2. Click on "Create parameter"
+3. Set Name to "/let-them-draw/website-url"
+4. Set Value to the "http://localhost:3000" and update it to the CloudFront URL when the website is deployed
+5. Click on "Create parameter"
 
 
 Note that when SES is in sandbox mode, every email address needs to be verified.

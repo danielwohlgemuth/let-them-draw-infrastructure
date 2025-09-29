@@ -27,6 +27,7 @@ export class ReceptionistStack extends cdk.Stack {
 
     const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
     const stripeApiKey = ssm.StringParameter.fromStringParameterName(this, 'StripeApiKeyParam', '/let-them-draw/stripe-api-key');
+    const websiteUrl = ssm.StringParameter.fromStringParameterName(this, 'WebsiteUrlParam', '/let-them-draw/website-url');
     cdk.Tags.of(this).add('Environment', environment.stringValue);
 
     const fn = new lambda.Function(this, 'Function', {
@@ -39,6 +40,7 @@ export class ReceptionistStack extends cdk.Stack {
           "STRIPE_API_KEY": stripeApiKey.stringValue,
           "QUEUE_NAME": props.queue.queueName,
           "BUCKET_NAME": props.artBucket.bucketName,
+          "WEBSITE_URL": websiteUrl.stringValue,
         },
         logGroup: new logs.LogGroup(this, 'LogGroup', {
           retention: logs.RetentionDays.ONE_WEEK,
