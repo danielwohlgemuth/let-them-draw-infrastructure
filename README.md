@@ -38,20 +38,21 @@ DynamoDB is used for this.
 
 ### Art Database Schema
 
-- Request Id (primary key)
-- User Id (secondary key)
-- Request Date (date)
-- Requirements (object (shape, color))
-- Status (string (new, in progress, done))
-- Picture URL (string)
+- requestId (primary key)
+- userId (secondary key)
+- requestDate (date)
+- requirements (object (shape, color))
+- status (string (new, paid, in progress, done, failed))
+- pictureUrl (string)
+- checkoutSessionId (string)
 
 Users are limited to only seeing their own pictures by filtering on User Id in addition to the Request Id.
 
 ### Shape Database Schema
 
-- Shape (primary key)
-- Price Id (string)
-- Price (string)
+- shape (primary key)
+- priceId (string)
+- price (string)
 
 ## Let Them Draw CI/CD Pipeline
 

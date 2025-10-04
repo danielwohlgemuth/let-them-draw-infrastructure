@@ -37,6 +37,13 @@ export class DataStack extends cdk.Stack {
       writeCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
     });
 
+    table.addGlobalSecondaryIndex({
+      indexName: 'CheckoutSessionIdIndex',
+      partitionKey: { name: 'checkoutSessionId', type: dynamodb.AttributeType.STRING },
+      readCapacity: dynamodb.Capacity.fixed(5),
+      writeCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
+    });
+
     const shapesTable = new dynamodb.TableV2(this, 'ShapesTable2', {
       partitionKey: { name: 'shapeName', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'order', type: dynamodb.AttributeType.NUMBER },
