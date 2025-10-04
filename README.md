@@ -143,7 +143,7 @@ Setup the stripe-webhook-secret parameter
 4. In the events filter, type "checkout"
 5. Select "checkout.session.completed", "checkout.session.expired", "checkout.session.async_payment_succeeded", and "checkout.session.async_payment_failed"
 6. Click "Continue"
-7. In the Endpoint URL field, enter the URL of the website stack's API Gateway and append "/api/stripe-webhook" to it
+7. In the Endpoint URL field, enter the URL of the CloudFront URL and append "/api/stripe-webhook" to it
 8. Under the Signing secret section, click "Reveal secret"
 9. Copy the secret
 10. Navigate to Parameter Store in the AWS Console
