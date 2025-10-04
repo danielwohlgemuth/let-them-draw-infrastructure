@@ -135,6 +135,23 @@ Setup the stripe-api-key parameter
 4. Set Value to a Stripe API key
 5. Click on "Create parameter"
 
+Setup the stripe-webhook-secret parameter
+
+1. Go to https://docs.stripe.com/
+2. In the bottom left, click on "Developers", then "Webhooks"
+3. Click on "Add endpoint"
+4. In the events filter, type "checkout"
+5. Select "checkout.session.completed", "checkout.session.expired", "checkout.session.async_payment_succeeded", and "checkout.session.async_payment_failed"
+6. Click "Continue"
+7. In the Endpoint URL field, enter the URL of the website stack's API Gateway and append "/api/stripe-webhook" to it
+8. Under the Signing secret section, click "Reveal secret"
+9. Copy the secret
+10. Navigate to Parameter Store in the AWS Console
+11. Click on "Create parameter"
+12. Set Name to "/let-them-draw/stripe-webhook-secret"
+13. Set Value to the copied secret
+14. Click on "Create parameter"
+
 Setup the website-url parameter
 
 1. Navigate to Parameter Store

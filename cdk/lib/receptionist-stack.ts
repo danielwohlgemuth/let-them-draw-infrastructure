@@ -27,6 +27,7 @@ export class ReceptionistStack extends cdk.Stack {
 
     const environment = ssm.StringParameter.fromStringParameterName(this, 'EnvironmentParam', '/let-them-draw/environment');
     const stripeApiKey = ssm.StringParameter.fromStringParameterName(this, 'StripeApiKeyParam', '/let-them-draw/stripe-api-key');
+    const stripeWebhookSecret = ssm.StringParameter.fromStringParameterName(this, 'StripeWebhookSecretParam', '/let-them-draw/stripe-webhook-secret');
     const websiteUrl = ssm.StringParameter.fromStringParameterName(this, 'WebsiteUrlParam', '/let-them-draw/website-url');
     cdk.Tags.of(this).add('Environment', environment.stringValue);
 
@@ -38,6 +39,7 @@ export class ReceptionistStack extends cdk.Stack {
           "TABLE_NAME": props.table.tableName,
           "SHAPES_TABLE_NAME": props.shapesTable.tableName,
           "STRIPE_API_KEY": stripeApiKey.stringValue,
+          "STRIPE_WEBHOOK_SECRET": stripeWebhookSecret.stringValue,
           "QUEUE_NAME": props.queue.queueName,
           "BUCKET_NAME": props.artBucket.bucketName,
           "WEBSITE_URL": websiteUrl.stringValue,
