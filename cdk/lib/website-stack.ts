@@ -303,6 +303,12 @@ export class WebsiteStack extends cdk.Stack {
     });
 
     httpApi.addRoutes({
+      path: '/api/stripe-webhook',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: receptionistIntegration
+    });
+
+    httpApi.addRoutes({
       path: '/{proxy+}',
       methods: [apigwv2.HttpMethod.ANY],
       integration: receptionistIntegration,
