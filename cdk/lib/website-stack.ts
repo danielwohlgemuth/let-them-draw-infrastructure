@@ -17,6 +17,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 interface WebsiteStackProps extends cdk.StackProps {
+  userPool: cognito.UserPool;
+  userPoolClient: cognito.UserPoolClient;
   receptionistFunction: lambda.Function;
 }
 
@@ -182,13 +184,13 @@ export class WebsiteStack extends cdk.Stack {
                   value: ''
                 },
                 'NEXT_PUBLIC_COGNITO_AUTHORITY': {
-                  value: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`
+                  value: `https://cognito-idp.${this.region}.amazonaws.com/${props.userPool.userPoolId}`
                 },
                 'NEXT_PUBLIC_COGNITO_DOMAIN': {
                   value: distribution.domainName
                 },
                 'NEXT_PUBLIC_COGNITO_CLIENT_ID': {
-                  value: userPoolClient.userPoolClientId
+                  value: props.userPoolClient.userPoolClientId
                 },
                 'NEXT_PUBLIC_LOGOUT_URL': {
                   value: `https://${distribution.domainName}/`
@@ -275,19 +277,12 @@ export class WebsiteStack extends cdk.Stack {
       ]
     });
 
-    userPool.addDomain('UserPoolDomain', {
-      cognitoDomain: {
-        domainPrefix: `let-them-draw-${environment.stringValue}`
-      },
-      managedLoginVersion: cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN
-    })
-
     const jwtAuthorizer = new apigwv2.HttpAuthorizer(this, 'CognitoJwtAuthorizer', {
       httpApi: httpApi,
       type: apigwv2.HttpAuthorizerType.JWT,
       identitySource: ['$request.header.Authorization'],
-      jwtAudience: [userPoolClient.userPoolClientId],
-      jwtIssuer: `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`,
+      jwtAudience: [props.userPoolClient.userPoolClientId],
+      jwtIssuer: `https://cognito-idp.${this.region}.amazonaws.com/${props.userPool.userPoolId}`,
     });
 
     httpApi.addRoutes({
@@ -318,36 +313,6 @@ export class WebsiteStack extends cdk.Stack {
           authorizationType: 'JWT',
         }),
       },
-    });
-
-    const cognitoBackgroundSvg = fs.readFileSync(path.join(__dirname, '../../assets/cognito-background.svg')).toString('base64');
-
-    new cognito.CfnManagedLoginBranding(this, 'CfnManagedLoginBranding', {
-      userPoolId: userPool.userPoolId,
-      clientId: userPoolClient.userPoolClientId,
-      returnMergedResources: false,
-      useCognitoProvidedValues: false,
-      settings: {
-        categories: {
-          global: {
-            colorSchemeMode: 'DYNAMIC'
-          }
-        }
-      },
-      assets: [
-        {
-          category: 'PAGE_BACKGROUND',
-          colorMode: 'DARK',
-          extension: 'SVG',
-          bytes: cognitoBackgroundSvg
-        },
-        {
-          category: 'PAGE_BACKGROUND',
-          colorMode: 'LIGHT',
-          extension: 'SVG',
-          bytes: cognitoBackgroundSvg
-        }
-      ]
     });
   }
 }

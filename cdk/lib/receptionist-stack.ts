@@ -10,8 +10,10 @@ import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 
 interface ReceptionistStackProps extends cdk.StackProps {
+  userPool: cognito.UserPool;
   table: dynamodb.TableV2;
   shapesTable: dynamodb.TableV2;
   queue: sqs.Queue;
@@ -56,6 +58,13 @@ export class ReceptionistStack extends cdk.Stack {
     props.table.grantReadWriteData(fn);
     props.shapesTable.grantReadWriteData(fn);
     props.artBucket.grantRead(fn);
+    fn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'cognito-idp:AdminGetUser',
+      ],
+      resources: [props.userPool.userPoolArn],
+    }));
 
     const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
       pipelineType: codepipeline.PipelineType.V2
