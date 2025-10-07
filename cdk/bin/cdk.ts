@@ -23,6 +23,7 @@ const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
     queue: dataStack.queue,
     artBucket: dataStack.artBucket,
 });
+const placeholderStack = new PlaceholderStack(app, 'PlaceholderStack', {});
 const websiteStack = new WebsiteStack(app, 'WebsiteStack', {
     userPool: authStack.userPool,
     userPoolClient: authStack.userPoolClient,
@@ -41,7 +42,4 @@ new MonitoringStack(app, 'MonitoringStack', {
     receptionistPipeline: receptionistStack.pipeline,
     websitePipeline: websiteStack.pipeline,
     awsPipeline: awsPipelineStack.pipeline,
-});
-const placeholderStack = new PlaceholderStack(app, 'PlaceholderStack', {
-    userPool: websiteStack.userPool,
 });

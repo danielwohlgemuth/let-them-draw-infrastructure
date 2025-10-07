@@ -13,8 +13,6 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import * as fs from 'fs';
-import * as path from 'path';
 
 interface WebsiteStackProps extends cdk.StackProps {
   userPool: cognito.UserPool;
@@ -23,7 +21,6 @@ interface WebsiteStackProps extends cdk.StackProps {
 }
 
 export class WebsiteStack extends cdk.Stack {
-  public readonly userPool: cognito.UserPool;
   public readonly distribution: cloudfront.Distribution;
   public readonly httpApi: apigwv2.HttpApi;
   public readonly pipeline: codepipeline.Pipeline;
@@ -40,30 +37,6 @@ export class WebsiteStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
-
-    const userPool = new cognito.UserPool(this, 'UserPool', {
-      selfSignUpEnabled: true,
-      signInCaseSensitive: false,
-      signInAliases: {
-        email: true
-      },
-      standardAttributes: {
-        email: {
-          required: true,
-          mutable: true
-        }
-      },
-      passwordPolicy: {
-        minLength: 10,
-        requireDigits: false,
-        requireLowercase: false,
-        requireSymbols: false,
-        requireUppercase: false
-      },
-      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
-      removalPolicy: cdk.RemovalPolicy.DESTROY
-    });
-    this.userPool = userPool;
 
     const receptionistIntegration = new integrations.HttpLambdaIntegration('ReceptionistIntegration', props.receptionistFunction);
 
@@ -138,35 +111,6 @@ export class WebsiteStack extends cdk.Stack {
           branchesIncludes: [infrastructureBranch.stringValue],
         }]
       }
-    });
-
-    const devEnvironment = new cdk.CfnCondition(this, 'CfnCondition', {
-      expression: cdk.Fn.conditionEquals(environment.stringValue, 'dev'),
-    });
-
-    const logoutUrls: any[] = [
-      `https://${distribution.domainName}/`,
-      cdk.Fn.conditionIf(devEnvironment.logicalId, 'http://localhost:3000/', cdk.Aws.NO_VALUE),
-    ];
-
-    const userPoolClient = userPool.addClient('UserPoolClient', {
-      oAuth: {
-        flows: {
-          authorizationCodeGrant: true,
-          implicitCodeGrant: true
-        },
-        scopes: [
-          cognito.OAuthScope.OPENID,
-          cognito.OAuthScope.EMAIL,
-          cognito.OAuthScope.PROFILE
-        ],
-        callbackUrls: logoutUrls,
-        logoutUrls: logoutUrls,
-      },
-      accessTokenValidity: cdk.Duration.hours(1),
-      idTokenValidity: cdk.Duration.hours(1),
-      refreshTokenValidity: cdk.Duration.days(30),
-      preventUserExistenceErrors: true,
     });
 
     const buildOutput = new codepipeline.Artifact();
