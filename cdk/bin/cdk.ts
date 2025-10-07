@@ -7,7 +7,6 @@ import { ReceptionistStack } from '../lib/receptionist-stack';
 import { WebsiteStack } from '../lib/website-stack';
 import { ArtistStack } from '../lib/artist-stack';
 import { MonitoringStack } from '../lib/monitoring-stack';
-import { PlaceholderStack } from '../lib/placeholder-stack';
 
 const app = new cdk.App();
 
@@ -23,7 +22,6 @@ const receptionistStack = new ReceptionistStack(app, 'ReceptionistStack', {
     queue: dataStack.queue,
     artBucket: dataStack.artBucket,
 });
-const placeholderStack = new PlaceholderStack(app, 'PlaceholderStack', {});
 const websiteStack = new WebsiteStack(app, 'WebsiteStack', {
     userPool: authStack.userPool,
     userPoolClient: authStack.userPoolClient,
