@@ -47,6 +47,7 @@ export class ReceptionistStack extends cdk.Stack {
           "QUEUE_NAME": props.queue.queueName,
           "BUCKET_NAME": props.artBucket.bucketName,
           "WEBSITE_URL": websiteUrl.stringValue,
+          "USER_POOL_ID": props.userPool.userPoolId,
         },
         logGroup: new logs.LogGroup(this, 'LogGroup', {
           retention: logs.RetentionDays.ONE_WEEK,
