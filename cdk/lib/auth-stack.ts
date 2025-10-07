@@ -73,12 +73,12 @@ export class AuthStack extends cdk.Stack {
     });
     this.userPoolClient = userPoolClient;
 
-    // userPool.addDomain('UserPoolDomain', {
-    //   cognitoDomain: {
-    //     domainPrefix: `let-them-draw-${environment.stringValue}`
-    //   },
-    //   managedLoginVersion: cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN
-    // })
+    userPool.addDomain('UserPoolDomain', {
+      cognitoDomain: {
+        domainPrefix: `let-them-draw-${environment.stringValue}`
+      },
+      managedLoginVersion: cognito.ManagedLoginVersion.NEWER_MANAGED_LOGIN
+    })
 
     const cognitoBackgroundSvg = fs.readFileSync(path.join(__dirname, '../../assets/cognito-background.svg')).toString('base64');
 
