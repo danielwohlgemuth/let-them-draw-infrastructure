@@ -51,7 +51,25 @@ export class MonitoringStack extends cdk.Stack {
       },
     });
 
-    pipelineFailureRule.addTarget(new targets.SnsTopic(pipelineFailureTopic));
+    pipelineFailureRule.addTarget(new targets.SnsTopic(pipelineFailureTopic, {
+      message: events.RuleTargetInput.fromMultilineText([
+        'Pipeline Failure Alert',
+        '',
+        'Pipeline: ' + events.EventField.fromPath('$.detail.pipeline'),
+        'Status: ' + events.EventField.fromPath('$.detail.state'),
+        'Time: ' + events.EventField.fromPath('$.time'),
+        'Account: ' + events.EventField.fromPath('$.account'),
+        'Region: ' + events.EventField.fromPath('$.region'),
+        '',
+        'Console URL: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/' +
+          events.EventField.fromPath('$.detail.pipeline') +
+          '/executions/' +
+          events.EventField.fromPath('$.detail.execution-id') +
+          '/visualization?region=' +
+          events.EventField.fromPath('$.region') +
+          '&tab=timeline'
+      ].join('\n'))
+    }));
 
     const dlqAlertTopic = new sns.Topic(this, 'DlqAlertTopic', {
       displayName: 'DLQ Alert Notifications',
