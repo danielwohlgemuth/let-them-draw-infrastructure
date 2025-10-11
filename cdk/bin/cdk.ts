@@ -12,6 +12,7 @@ const app = new cdk.App();
 
 cdk.Tags.of(app).add('Project', 'Let Them Draw');
 
+new PlaceholderStack(app, 'PlaceholderStack', {});
 const dataStack = new DataStack(app, 'DataStack', {});
 const awsPipelineStack = new AwsPipelineStack(app, 'AwsPipelineStack', {});
 const authStack = new AuthStack(app, 'AuthStack', {});
