@@ -247,6 +247,20 @@ export class WebsiteStack extends cdk.Stack {
       integration: receptionistIntegration
     });
 
+    if (environment.stringValue === 'dev') {
+      httpApi.addRoutes({
+        path: '/api/openapi.json',
+        methods: [apigwv2.HttpMethod.GET],
+        integration: receptionistIntegration
+      });
+
+      httpApi.addRoutes({
+        path: '/api/docs',
+        methods: [apigwv2.HttpMethod.GET],
+        integration: receptionistIntegration
+      });
+    }
+
     httpApi.addRoutes({
       path: '/{proxy+}',
       methods: [apigwv2.HttpMethod.ANY],
