@@ -1,6 +1,16 @@
 # Let Them Draw App Overview and Infrastructure
 
-Let Them Draw is an app that lets clients specify a desired picture which gets produced by artists.
+Let Them Draw is a fictional app that lets clients specify a desired picture which then gets produced by artists.
+
+Some pictures are easy to produce and are free. Other pictures are more complex and require payment through a Stripe integration.
+
+![request detail done](/assets/request-detail-done.png)
+
+Related Repositories:
+
+- [let-them-draw-website](https://github.com/danielwohlgemuth/let-them-draw-website)
+- [let-them-draw-receptionist](https://github.com/danielwohlgemuth/let-them-draw-receptionist)
+- [let-them-draw-artist](https://github.com/danielwohlgemuth/let-them-draw-artist)
 
 ## Architecture
 
@@ -10,7 +20,7 @@ Let Them Draw is an app that lets clients specify a desired picture which gets p
 
 The system behind the Let Them Draw app has 5 main components: the website, the receptionist, the artist, the databases, and the authentication stack.
 
-### Website
+### Website ([repository](https://github.com/danielwohlgemuth/let-them-draw-website))
 
 The website lets the clients see their orders and request a new picture.
 
@@ -20,13 +30,13 @@ It's built as a static website stored in an S3 bucket and distributed through Cl
 
 The clients sign-in using Cognito.
 
-### Receptionist
+### Receptionist ([repository](https://github.com/danielwohlgemuth/let-them-draw-receptionist))
 
 The receptionist handles providing a list of existing orders and accepts new requests.
 
 This is accomplished with an API Gateway that forwards requests to a Lambda function which retrieves orders from a database and places new requests into a SQS queue. For requests that require payment, Stripe Checkout is used to handle the payment.
 
-### Artist
+### Artist ([repository](https://github.com/danielwohlgemuth/let-them-draw-artist))
 
 The artists take new requests and produce a picture for the client.
 
@@ -79,15 +89,54 @@ A monitoring stack is used to notify about failed pipeline runs or if the artist
 
 - If a queue triggers a lambda function, it's best to attach a dead letter queue to the queue so that the lambda function doesn't keep failing repeatedly and consume resources without producing a result.
 - A dead letter queue can be attached to an SNS topic to notify about failed deliveries.
-- The keyword "status" is a reserved word in DynamoDB, so it can't be used directly when updating an item. The work around is to use expression attribute names to map the reserved word to a different name, for example "#status".
+- The keyword "status" is a reserved word in DynamoDB, so it can't be used directly when updating an item. The workaround is to use expression attribute names to map the reserved word to a different name, for example "#status".
 See also [Reserved words in DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html).
-- Use parameter store to decouple stacks and break cyclic dependencies.
+- Parameter store are helpful to decouple stacks and break cyclic dependencies.
 
 
 ## Pricing
 
 - Standard Resolution Metrics Alarm: $0.10 per alarm metric
 - First 10,000 metrics: $0.30
+
+
+## Screenshots
+
+### Artwork Request Flow
+
+![requests](/assets/requests.png)
+
+![request paid](/assets/request-paid.png)
+
+![stripe checkout](/assets/stripe-checkout.png)
+
+![art ready email](/assets/art-ready-email.png)
+
+![request detail done](/assets/request-detail-done.png)
+
+### Architecture Evolution
+
+The architecture of the app went through a few iterations to add additional features. Here is an animation of how it evolved.
+
+![let them draw architecture evolution](/assets/let-them-draw-evolution.gif)
+
+### Artist Test Code Coverage
+
+The code of the artist function has tests to verify the funcionality. The code coverage of each succesful build is visualized in a CodeBuild report.
+
+![artist test code coverage](/assets/test-coverage.png)
+
+### Dead Letter Queue Alert
+
+Sent when the artist lambda function fails to produce an image while processing a request.
+
+![dead letter queue alert](/assets/dead-letter-queue-alert.png)
+
+### Pipeline Failure Alert
+
+When any of the build pipelines fail, an alert is sent.
+
+![pipeline failure alert](/assets/pipeline-failure-alert.png)
 
 
 ## Setup
@@ -97,11 +146,7 @@ See also [Reserved words in DynamoDB](https://docs.aws.amazon.com/amazondynamodb
 - AWS CLI
 - CDK CLI
 
-Initialize CDK
-
-```bash
-cdk bootstrap
-```
+### Steps
 
 
 Setup the GitHub connection:
@@ -191,6 +236,15 @@ To verify an email address:
 5. Enter the email address
 6. Click on "Create identity"
 7. Click on the verification link in the email that was sent
+
+
+Initialize CDK
+
+```bash
+cdk bootstrap
+```
+
+Deploy all stacks
 
 ```bash
 cdk deploy --all
