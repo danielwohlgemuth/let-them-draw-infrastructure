@@ -74,6 +74,22 @@ The code that sets up and maintains the infrastructure of the app is configured 
 
 A monitoring stack is used to notify about failed pipeline runs or if the artist failed to produce a picture.
 
+
+## Lessons Learned
+
+- If a queue triggers a lambda function, it's best to attach a dead letter queue to the queue so that the lambda function doesn't keep failing repeatedly and consume resources without producing a result.
+- A dead letter queue can be attached to an SNS topic to notify about failed deliveries.
+- The keyword "status" is a reserved word in DynamoDB, so it can't be used directly when updating an item. The work around is to use expression attribute names to map the reserved word to a different name, for example "#status".
+See also [Reserved words in DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html).
+- Use parameter store to decouple stacks and break cyclic dependencies.
+
+
+## Pricing
+
+- Standard Resolution Metrics Alarm: $0.10 per alarm metric
+- First 10,000 metrics: $0.30
+
+
 ## Setup
 
 ### Prerequisites
