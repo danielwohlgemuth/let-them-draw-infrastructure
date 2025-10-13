@@ -48,7 +48,10 @@ export class DataStack extends cdk.Stack {
       partitionKey: { name: 'shapeName', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'order', type: dynamodb.AttributeType.NUMBER },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      billing: dynamodb.Billing.onDemand(),
+      billing: dynamodb.Billing.onDemand({
+        maxReadRequestUnits: 5,
+        maxWriteRequestUnits: 5,
+      }),
     });
     this.shapesTable = shapesTable;
 
