@@ -1,0 +1,234 @@
+{
+	"Name": "Let Them Draw Cost Estimate",
+	"Total Cost": {
+		"monthly": "13.51",
+		"upfront": "0.00",
+		"12 months": "162.12"
+	},
+	"Metadata": {
+		"Currency": "USD",
+		"Locale": "en_US",
+		"Created On": "10/13/2025",
+		"Legal Disclaimer": "AWS Pricing Calculator provides only an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",
+		"Share Url": "https://calculator.aws/#/estimate?id=b08dc4990687d28ce1f9c6dc9bcc92a86bd67585"
+	},
+	"Groups": {
+		"Services": [
+			{
+				"Service Name": "DynamoDB on-demand capacity",
+				"Description": "Requests and Shapes tables",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.37",
+					"upfront": "0.00",
+					"12 months": "4.44"
+				},
+				"Properties": {
+					"Table class": "Standard",
+					"Average item size (all attributes)": "1 KB",
+					"Data storage size": "1 GB"
+				}
+			},
+			{
+				"Service Name": "DynamoDB provisioned capacity",
+				"Description": "Requests and Shapes tables",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "8.13",
+					"upfront": "0.00",
+					"12 months": "97.56"
+				},
+				"Properties": {
+					"Table class": "Standard",
+					"Average item size (all attributes)": "1 KB",
+					"Write reserved capacity term": "1 year",
+					"Read reserved capacity term": "1 year",
+					"Data storage size": "1 GB"
+				}
+			},
+			{
+				"Service Name": "S3 Standard",
+				"Description": "Art results and Pipeline builds",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.03",
+					"upfront": "0.00",
+					"12 months": "0.36"
+				},
+				"Properties": {
+					"S3 Standard storage": "1 GB per month",
+					"PUT, COPY, POST, LIST requests to S3 Standard": "1000",
+					"GET, SELECT, and all other requests from S3 Standard": "10000"
+				}
+			},
+			{
+				"Service Name": "Data Transfer",
+				"Description": "Art results and Pipeline builds",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.09",
+					"upfront": "0.00",
+					"12 months": "1.08"
+				},
+				"Properties": {
+					"DT Inbound: Not selected": "0 TB per month",
+					"DT Outbound: Internet": "1 GB per month"
+				}
+			},
+			{
+				"Service Name": "Amazon API Gateway",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "1.00",
+					"upfront": "0.00",
+					"12 months": "12.00"
+				},
+				"Properties": {
+					"HTTP API requests units": "millions",
+					"Average size of each request": "34 KB",
+					"REST API request units": "millions",
+					"Cache memory size (GB)": "None",
+					"WebSocket message units": "thousands",
+					"Average message size": "32 KB",
+					"Requests": "1 per month"
+				}
+			},
+			{
+				"Service Name": "AWS CodePipeline",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.40",
+					"upfront": "0.00",
+					"12 months": "4.80"
+				},
+				"Properties": {
+					"Number of action execution minutes used in pipeline of type V2 per account per month": "300"
+				}
+			},
+			{
+				"Service Name": "AWS CodeBuild",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "1.50",
+					"upfront": "0.00",
+					"12 months": "18.00"
+				},
+				"Properties": {
+					"AWS CodeBuild Compute Type": "On-Demand EC2",
+					"Number of builds in a month": "100",
+					"Search Instance Type": "general1.small",
+					"Operating system": "Linux"
+				}
+			},
+			{
+				"Service Name": "AWS Lambda",
+				"Description": "Receptionist and Artist lambdas",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.00",
+					"upfront": "0.00",
+					"12 months": "0.00"
+				},
+				"Properties": {
+					"Invoke Mode": "Buffered",
+					"Architecture": "x86",
+					"Number of requests": "1000 per month",
+					"Amount of ephemeral storage allocated": "512 MB"
+				}
+			},
+			{
+				"Service Name": "Amazon Cognito",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.50",
+					"upfront": "0.00",
+					"12 months": "6.00"
+				},
+				"Properties": {
+					"Optimization Rate for Token Requests": "0",
+					"Optimization Rate for App Clients": "0",
+					"Number of monthly active users (MAU)": "10",
+					"Advanced security features": "Enabled"
+				}
+			},
+			{
+				"Service Name": "Amazon Simple Email Service (SES)",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.10",
+					"upfront": "0.00",
+					"12 months": "1.20"
+				},
+				"Properties": {
+					"Number of Emails processed by Mail Manager": "per month",
+					"Email messages sent from EC2": "1000 per month"
+				}
+			},
+			{
+				"Service Name": "Amazon Simple Queue Service (SQS)",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.40",
+					"upfront": "0.00",
+					"12 months": "4.80"
+				},
+				"Properties": {
+					"Standard queue requests": "1 million per month"
+				}
+			},
+			{
+				"Service Name": "Standard topics",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.00",
+					"upfront": "0.00",
+					"12 months": "0.00"
+				},
+				"Properties": {
+					"Requests": "1 million per month",
+					"EMAIL/EMAIL-JSON Notifications": "100 per month"
+				}
+			},
+			{
+				"Service Name": "Amazon CloudFront",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.09",
+					"upfront": "0.00",
+					"12 months": "1.08"
+				},
+				"Properties": {
+					"Data transfer out to internet": "1 GB per month"
+				}
+			},
+			{
+				"Service Name": "Amazon CloudWatch",
+				"Region": "US East (N. Virginia)",
+				"Status": "",
+				"Service Cost": {
+					"monthly": "0.90",
+					"upfront": "0.00",
+					"12 months": "10.85"
+				},
+				"Properties": {
+					"Number of Metrics (includes detailed and custom metrics)": "1",
+					"Standard Logs: Data Ingested": "1 GB",
+					"Number of Standard Resolution Alarm Metrics": "1"
+				}
+			}
+		]
+	}
+}

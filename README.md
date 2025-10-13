@@ -96,8 +96,11 @@ See also [Reserved words in DynamoDB](https://docs.aws.amazon.com/amazondynamodb
 
 ## Pricing
 
-- Standard Resolution Metrics Alarm: $0.10 per alarm metric
-- First 10,000 metrics: $0.30
+Based on the AWS Cost Calculator and using a low estimate for everyting, the monthly cost is about 13.51 USD.
+
+[AWS Cost Calculator](https://calculator.aws/#/estimate?id=4f165607be5f02ffe120e0ace144651fc3f117b5)
+
+[Cost Estimate JSON](/assets/let-them-draw-cost-estimate.json)
 
 
 ## Screenshots
