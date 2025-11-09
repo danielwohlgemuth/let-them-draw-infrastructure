@@ -6,6 +6,8 @@ Some pictures are easy to produce and are free. Other pictures are more complex 
 
 ![request detail done](/assets/request-detail-done.png)
 
+See [this YouTube video](https://youtu.be/gJP6-isvmPY) for an overview of how it works.
+
 Related Repositories:
 
 - [let-them-draw-website](https://github.com/danielwohlgemuth/let-them-draw-website)
